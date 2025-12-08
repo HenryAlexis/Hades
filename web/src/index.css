@@ -12,20 +12,19 @@
   box-sizing: border-box;
 }
 
+html {
+  cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABFklEQVRYR9WXURLDIAhE6/0PbSdOtUpcd1Gnpv1KGpTHBpCE1/cXq+vrMph7dGvXZTtpfW10DCA5jrH1H0Jhs5E0hnZdCR+vb5S8Nn8mQCeS9BdSalYJqMBjAGzq59xAESN7VFVUgV8AZB/dZBR7QTFDCqGquvUBVVoEtgIwpQRzmANSFHgWQKExHdIrPeuMvQNDarXe6nC/AutgV3JW+6bgqQLeV8FekRtgV+ToDKEKnACYKsfZjjkam7a0ZpYTytwmgainpC3HvwBocgKOxqRjehoR9DFKNFYtOwCGYCszobeCbl26N6yyQ6g8X/Wex/rBPsNEV6qAMaJPMynIHQCoSqS9JSMmwef51LflTgCRszU7DvAGiV6mHWfsaVUAAAAASUVORK5CYII='), auto;
+}
+
 /* BODY — dark stone medieval ambience */
 html,
 body {
   width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100vh;        /* lock to viewport */
+  overflow: hidden;     /* disable page scroll (desktop + mobile) */
 }
 
-/* If you later add a texture image to /public, e.g. /bg-stone.jpg:
-   body {
-     background: #0a0a0f url("/bg-stone.jpg") repeat;
-     background-size: 600px;
-   }
-*/
+/* Main background + typography */
 body {
   background:
     radial-gradient(circle at top, #252020 0, #0a0a0f 40%, #050509 100%);
@@ -35,9 +34,13 @@ body {
   padding: 1.5rem;
 }
 
-/* Root container */
+/* Root container fills screen and holds the app */
 #root {
+  height: 100vh;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;    /* internal panels scroll instead */
 }
 
 /* Medieval headings */
@@ -47,7 +50,7 @@ h1, h2, h3, h4 {
   text-shadow: 1px 1px 2px #000;
 }
 
-/* Scrollbar — bone-like */
+/* Scrollbar — bone-like (for internal scroll areas) */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -60,14 +63,6 @@ h1, h2, h3, h4 {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #8a6a4c;
-}
-
-/* Media-safe images / videos */
-img,
-video {
-  max-width: 100%;
-  height: auto;
-  display: block;
 }
 
 /* Inputs + textareas — aged parchment boxes */
@@ -95,12 +90,12 @@ button {
   background: linear-gradient(#3b2a14, #2a1e0f);
   border: 1px solid #c79a3d;
   color: #ffe3a3;
-  padding: 0.45rem 1rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 4px;
   font-family: 'MedievalSharp', cursive;
   cursor: pointer;
   transition: 0.2s;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 button:hover {
   background: linear-gradient(#52401e, #3b2a14);
@@ -115,6 +110,7 @@ button:hover {
   padding: 1rem;
   box-shadow: 0 0 10px #000;
   max-width: 100%;
+  overflow-y: auto; /* internal scroll (desktop + mobile) */
 }
 
 /* Header bar style */
@@ -138,7 +134,7 @@ button:hover {
 }
 
 /* --------------------------------------------------
-   Mobile responsiveness
+   Responsive tweaks
 -------------------------------------------------- */
 
 @media (max-width: 900px) {
@@ -148,12 +144,42 @@ button:hover {
 }
 
 @media (max-width: 600px) {
-  body {
+
+  /* Root still full-screen on mobile */
+  #root {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Log panel gets a fixed height and scrolls inside */
+  .medieval-panel {
+    height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* Make form elements stack on mobile */
+  form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+
+  form input {
+    width: 100%;
+  }
+
+  /* Submit button full-width and larger */
+  button {
+    width: 100%;
+    font-size: 1.1rem;
     padding: 0.75rem;
+    margin-top: 0.25rem;
   }
 
   h1, h2, h3, h4 {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
 
   .medieval-header {
@@ -161,24 +187,13 @@ button:hover {
   }
 
   .medieval-stats {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   input,
   select,
   textarea {
-    font-size: 0.9rem;
-  }
-
-  button {
-    width: 100%;
-    text-align: center;
-    margin-top: 0.4rem;
-    font-size: 0.9rem;
-  }
-
-  form {
-    width: 100%;
+    font-size: 1rem;
   }
 
   .medieval-panel {

@@ -22,7 +22,9 @@ function getStateBySession(sessionId) {
   });
 }
 
-function getTurnsForSession(sessionId, limit = 20) {
+// Exported so server.js can reuse it for /api/history
+export function getTurnsForSession(sessionId, limit = 6) {
+  // limit is number of messages, so 6 ≈ last 3 interactions (user + GM)
   return new Promise((resolve, reject) => {
     db.all(
       "SELECT role, content FROM turns WHERE session_id = ? ORDER BY id DESC LIMIT ?",
@@ -55,7 +57,8 @@ Inventory: ${state.inventory || "Empty"}
 GM MUST follow output rules already defined.
 `.trim();
 
-  const history = await getTurnsForSession(sessionId, 10); // cut from 20 → cheaper
+  // use only the last ~3 interactions (6 messages max) as context
+  const history = await getTurnsForSession(sessionId, 6);
 
   const messages = [
     { role: "system", content: WORLD_SYSTEM_PROMPT }, // includes short-output rules now
@@ -68,7 +71,7 @@ GM MUST follow output rules already defined.
   const completion = await deepseek.chat.completions.create({
     model: "deepseek-chat",
     messages,
-    max_tokens: 60,           // keeps responses tiny and cheap
+    max_tokens: 120, // keeps responses tiny and cheap
     temperature: 0.6
   });
 

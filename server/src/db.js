@@ -44,6 +44,12 @@ db.serialize(() => {
     )
   `);
 
+  // Helpful index for per-session history lookups
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_turns_session_id
+    ON turns (session_id, created_at);
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS state (
       session_id TEXT PRIMARY KEY,

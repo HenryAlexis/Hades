@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { sendTurn, fetchCharacter } from "../api";
+import { sendTurn, fetchCharacter, fetchHistory } from "../api";
 
 export function GameView() {
   const [log, setLog] = useState([
@@ -23,14 +23,32 @@ export function GameView() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchCharacter();
-        if (data) {
-          setPlayer(data);
+        // Load character + last history in parallel
+        const [character, historyData] = await Promise.all([
+          fetchCharacter(),
+          fetchHistory()
+        ]);
+
+        if (character) {
+          setPlayer(character);
         }
-        // Note: stats are currently static on the client.
-        // Later you can wire these to real state coming from the backend.
+
+        if (historyData && Array.isArray(historyData.turns) && historyData.turns.length > 0) {
+          // Map DB roles to UI roles
+          const mappedLog = historyData.turns.map((t) => ({
+            from:
+              t.role === "user"
+                ? "you"
+                : t.role === "assistant"
+                ? "gm"
+                : "system",
+            text: t.content
+          }));
+          setLog(mappedLog);
+        }
+        // if no history, we keep the initial system intro in state
       } catch (err) {
-        console.error("Failed to load character:", err);
+        console.error("Failed to load character or history:", err);
       }
     })();
   }, []);

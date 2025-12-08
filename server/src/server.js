@@ -4,21 +4,39 @@ import cors from "cors";
 import "dotenv/config";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "./db.js";
-import { runGameTurn } from "./gameLogic.js";
+import { runGameTurn, getTurnsForSession } from "./gameLogic.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.json());
-app.use(cookieParser());
+// --- CORS: allow localhost (dev) and games.henrydoes.com (prod) ---
 
-// For local dev with React running on a different port
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://games.henrydoes.com"
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // adjust for your front-end URL
+    origin(origin, callback) {
+      // Allow non-browser / same-origin requests (e.g. curl, Postman, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn("Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true
   })
 );
+
+app.use(express.json());
+app.use(cookieParser());
 
 // --- Session middleware (cookie-based) ---
 
@@ -121,6 +139,19 @@ app.post("/api/turn", async (req, res) => {
   } catch (e) {
     console.error("DeepSeek error:", e);
     res.status(500).json({ error: "Failed to run game turn" });
+  }
+});
+
+// --- History API (last ~3 interactions: up to 6 messages) ---
+
+app.get("/api/history", async (req, res) => {
+  try {
+    // 6 messages ≈ last 3 user+GM exchanges
+    const turns = await getTurnsForSession(req.sessionId, 6);
+    res.json({ turns });
+  } catch (err) {
+    console.error("Error fetching history:", err);
+    res.status(500).json({ error: "Failed to load history" });
   }
 });
 
