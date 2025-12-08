@@ -1,0 +1,187 @@
+/* --------------------------------------------------
+   Medieval Global Theme — Dark Fantasy UI
+-------------------------------------------------- */
+
+/* Load medieval-style Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English&display=swap');
+
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BODY — dark stone medieval ambience */
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* If you later add a texture image to /public, e.g. /bg-stone.jpg:
+   body {
+     background: #0a0a0f url("/bg-stone.jpg") repeat;
+     background-size: 600px;
+   }
+*/
+body {
+  background:
+    radial-gradient(circle at top, #252020 0, #0a0a0f 40%, #050509 100%);
+  color: #f0e6d2;
+  font-family: 'IM Fell English', serif;
+  letter-spacing: 0.4px;
+  padding: 1.5rem;
+}
+
+/* Root container */
+#root {
+  min-height: 100vh;
+}
+
+/* Medieval headings */
+h1, h2, h3, h4 {
+  font-family: 'MedievalSharp', cursive;
+  color: #e2c27b;
+  text-shadow: 1px 1px 2px #000;
+}
+
+/* Scrollbar — bone-like */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #1a1a1f;
+}
+::-webkit-scrollbar-thumb {
+  background: #6a513b;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8a6a4c;
+}
+
+/* Media-safe images / videos */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Inputs + textareas — aged parchment boxes */
+input,
+select,
+textarea {
+  background: #131316;
+  border: 1px solid #3a2d1a;
+  padding: 0.4rem 0.6rem;
+  color: #f0e6d2;
+  border-radius: 4px;
+  font-family: 'IM Fell English', serif;
+  font-size: 0.95rem;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #d4a14a;
+  box-shadow: 0 0 6px #d4a14a66;
+}
+
+/* Buttons — gold-rimmed, medieval */
+button {
+  background: linear-gradient(#3b2a14, #2a1e0f);
+  border: 1px solid #c79a3d;
+  color: #ffe3a3;
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  font-family: 'MedievalSharp', cursive;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 0.95rem;
+}
+button:hover {
+  background: linear-gradient(#52401e, #3b2a14);
+  transform: scale(1.03);
+}
+
+/* Panels (log, forms, boxes) */
+.medieval-panel {
+  background: rgba(10, 10, 15, 0.85);
+  border: 1px solid #4a3823;
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 0 10px #000;
+  max-width: 100%;
+}
+
+/* Header bar style */
+.medieval-header {
+  background: #1a1310;
+  padding: 0.75rem 1rem;
+  border: 1px solid #5c4428;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-family: 'MedievalSharp', cursive;
+  color: #e7c57f;
+  text-shadow: 1px 1px 3px #000;
+  max-width: 100%;
+}
+
+/* Player stats bar */
+.medieval-stats {
+  font-size: 0.9rem;
+  color: #d6c7a3;
+  margin-top: 0.25rem;
+}
+
+/* --------------------------------------------------
+   Mobile responsiveness
+-------------------------------------------------- */
+
+@media (max-width: 900px) {
+  body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  h1, h2, h3, h4 {
+    font-size: 1.2rem;
+  }
+
+  .medieval-header {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .medieval-stats {
+    font-size: 0.8rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 0.9rem;
+  }
+
+  button {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  form {
+    width: 100%;
+  }
+
+  .medieval-panel {
+    padding: 0.75rem;
+  }
+}

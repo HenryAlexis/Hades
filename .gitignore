@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+.vite/
+
+# Environment
+.env
+*.env
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# SQLite db
+server/game.db
