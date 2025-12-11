@@ -109,6 +109,7 @@ export function AdminView() {
   // ---------------- Deletes ----------------
 
   async function handleDeleteSession(sessionId) {
+    if (deletingAll || deletingSessionId) return;
     if (!window.confirm("Delete this session and all its data?")) return;
 
     setDeletingSessionId(sessionId);
@@ -137,6 +138,7 @@ export function AdminView() {
   async function handleDeleteAllSessions() {
     if (
       !sessions.length ||
+      deletingAll ||
       !window.confirm(
         "This will remove ALL sessions and their data from the database. Proceed?"
       )
@@ -163,8 +165,7 @@ export function AdminView() {
     }
   }
 
-  // ---------------- Mount: auto-load if cookie already valid ----------------
-
+  // ---------------- Mount: auto-load if admin cookie is valid ----------------
   useEffect(() => {
     (async () => {
       try {

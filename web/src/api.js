@@ -74,6 +74,14 @@ export async function adminLogout() {
   return res.json();
 }
 
+// Get global admin stats for dashboard header
+export async function fetchAdminStats() {
+  const res = await fetch(`${API_BASE}/admin/stats`, {
+    credentials: "include"
+  });
+  return res.json();
+}
+
 // Get list of sessions + basic player info
 export async function fetchAdminSessions() {
   const res = await fetch(`${API_BASE}/admin/sessions`, {
@@ -87,6 +95,32 @@ export async function fetchAdminSessionDetails(sessionId) {
   const res = await fetch(
     `${API_BASE}/admin/session/${encodeURIComponent(sessionId)}`,
     {
+      credentials: "include"
+    }
+  );
+  return res.json();
+}
+
+// Update player profile fields for a given session
+export async function updateAdminPlayer(sessionId, payload) {
+  const res = await fetch(
+    `${API_BASE}/admin/player/${encodeURIComponent(sessionId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload)
+    }
+  );
+  return res.json();
+}
+
+// Reset session story (delete turns + state, keep player)
+export async function resetAdminSession(sessionId) {
+  const res = await fetch(
+    `${API_BASE}/admin/session/${encodeURIComponent(sessionId)}/reset`,
+    {
+      method: "POST",
       credentials: "include"
     }
   );

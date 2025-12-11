@@ -17,7 +17,7 @@ This README describes the current codebase—including foundational backend impr
 ## Features
 
 ### ⭐ Player-Facing Features
-- Cookie-based session tracking (persistent per-player saves)
+- Cookie-based session tracking (persistent per-player saves) via dedicated middleware
 - Character creation flow:
   - name, class, alignment, background, goal
 - Turn-based narrative loop:
@@ -29,20 +29,17 @@ This README describes the current codebase—including foundational backend impr
 
 ### ⭐ Admin Features
 - Password-protected admin dashboard (`/admin`)
-- View all sessions (filtered: no empty/ghost sessions)
-- See player profile, state, and full recent turn history
-- Delete one session (with all linked data)
-- Delete all sessions (complete reset)
-- Dummy data seeding for development
-- Clean REST API structure
+- Session list (no empty/ghost sessions) with class/goal context
+- Per-session drilldown: player profile, state, last 30 turns
+- Delete one session, reset one session (keep player), or delete all sessions
+- Login/logout cookies for admin-only endpoints
+- Stats header (totals, today’s sessions, mode: dummy vs live)
 
 ### ⭐ Core Improvements + Foundations
-- REST-cleaned admin endpoints
-- Fixed `DELETE /api/admin/sessions` and added POST alias
-- Improved error responses across the API
-- Added safe session upsert (fixes ghost-cookie issue)
-- Admin endpoints now bypass session creation
-- Added dummy seed data for better testing
+- Routes split into `playerRoutes` and `adminRoutes`
+- Dedicated `playerSession` middleware to upsert session cookie + DB row (skips admin/health)
+- REST-cleaned admin endpoints with explicit login/logout + auth guard
+- History endpoint for players (`GET /api/history`) and improved error handling
 - Prepared scaffolding for future systems (lore, NPCs, story engine)
 
 ## Prerequisites
@@ -87,6 +84,11 @@ server/
     gameLogic.js
     deepseekClient.js
     worldConfig.js
+    middleware/
+      playerSession.js
+    routes/
+      playerRoutes.js
+      adminRoutes.js
   game.db
 
 web/
@@ -97,16 +99,22 @@ web/
     main.jsx
     components/
       admin/
+        AdminHeader.jsx
+        AdminLogin.jsx
+        AdminSessionDetails.jsx
+        AdminSessionList.jsx
+        AdminView.jsx
       CharacterSetup.jsx
       GameView.jsx
 ```
 
 ## Development Notes
 - Cookies use SameSite=Lax
+- Player session middleware sets a cookie + upserts session rows; admin + health routes bypass it
+- Admin auth is a simple password stored in env; login sets `admin_auth` cookie
 - SQLite schema auto-initializes
 - Dummy seed data loads only on empty DB
 - Short-context prompt used for AI
-- Admin routes bypass session middleware
 
 ## Useful Commands
 ```
