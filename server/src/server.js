@@ -9,8 +9,9 @@ import { runGameTurn, getTurnsForSession } from "./gameLogic.js";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- CORS: allow localhost (dev) and games.henrydoes.com (prod) ---
-
+// -----------------------------------------------
+// CORS
+// -----------------------------------------------
 const allowedOrigins = [
   "http://localhost:5173",
   "https://games.henrydoes.com"
@@ -19,16 +20,10 @@ const allowedOrigins = [
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow non-browser / same-origin requests (e.g. curl, Postman, server-to-server)
-      if (!origin) {
-        return callback(null, true);
-      }
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.warn("Blocked by CORS:", origin);
+      console.warn("[CORS] Blocked:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true
@@ -39,42 +34,34 @@ app.use(express.json());
 app.use(cookieParser());
 
 // ==================================================
-// SESSION MIDDLEWARE (cookie-based for players)
+// SESSION MIDDLEWARE – PLAYER SESSIONS ONLY
 // ==================================================
-
 app.use((req, res, next) => {
-  // Skip session tracking for admin + health endpoints
   if (req.path.startsWith("/api/admin") || req.path === "/api/health") {
     return next();
   }
 
   let sessionId = req.cookies.session_id;
 
-  // If no cookie, create one
   if (!sessionId) {
     sessionId = uuidv4();
     res.cookie("session_id", sessionId, {
       httpOnly: true,
       sameSite: "lax",
-      // secure: true, // enable in production with https
-      maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
+      maxAge: 1000 * 60 * 60 * 24 * 30
     });
   }
 
-  // ALWAYS upsert into sessions table, even if the cookie already existed.
-  // This fixes the case where rows were deleted via admin but cookies remain.
+  // Ensure session exists in DB
   db.run(
     `
       INSERT INTO sessions (id, created_at, updated_at)
       VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT(id) DO UPDATE SET
-        updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT(id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
     `,
     [sessionId],
-    (err) => {
-      if (err) {
-        console.error("Error upserting session:", err);
-      }
+    err => {
+      if (err) console.error("[DB] Session upsert failed:", err);
     }
   );
 
@@ -83,44 +70,38 @@ app.use((req, res, next) => {
 });
 
 // ==================================================
-// ADMIN AUTH (simple password + cookie)
+// ADMIN AUTH
 // ==================================================
-
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
 
 function requireAdmin(req, res, next) {
-  if (req.cookies.admin_auth === "yes") {
-    return next();
-  }
+  if (req.cookies.admin_auth === "yes") return next();
   return res.status(401).json({ error: "Not authenticated as admin" });
 }
 
-// Admin login: POST /api/admin/login { password }
 app.post("/api/admin/login", (req, res) => {
   const { password } = req.body || {};
-
   if (!password || password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: "Invalid admin password" });
   }
 
-  // Set admin cookie
   res.cookie("admin_auth", "yes", {
     httpOnly: true,
     sameSite: "lax",
-    // secure: true, // enable with https
-    maxAge: 1000 * 60 * 60 * 8 // 8 hours
+    maxAge: 1000 * 60 * 60 * 8
   });
 
   res.json({ ok: true });
 });
 
-// Optional: logout admin
 app.post("/api/admin/logout", (req, res) => {
   res.clearCookie("admin_auth");
   res.json({ ok: true });
 });
 
-// List sessions with basic info (admin only)
+// ==================================================
+// ADMIN — SESSION LIST
+// ==================================================
 app.get("/api/admin/sessions", requireAdmin, (req, res) => {
   const sql = `
     SELECT
@@ -132,35 +113,33 @@ app.get("/api/admin/sessions", requireAdmin, (req, res) => {
       p.goal AS player_goal
     FROM sessions s
     LEFT JOIN players p ON p.session_id = s.id
-    WHERE p.name IS NOT NULL              -- hide sessions with no character
+    WHERE p.name IS NOT NULL
     ORDER BY s.created_at DESC
     LIMIT 100
   `;
 
   db.all(sql, [], (err, rows) => {
     if (err) {
-      console.error("Admin sessions error:", err);
-      return res.status(500).json({ error: "DB error" });
+      console.error("[ADMIN] Failed to load sessions:", err);
+      return res.status(500).json({ error: "DB error loading sessions" });
     }
     res.json({ sessions: rows });
   });
 });
 
-// Session details: player, state, recent history (admin only)
+// ==================================================
+// ADMIN — SESSION DETAILS
+// ==================================================
 app.get("/api/admin/session/:id", requireAdmin, (req, res) => {
   const sessionId = req.params.id;
   const result = { sessionId };
 
   db.get(
-    `
-      SELECT name, class, background, goal, alignment
-      FROM players
-      WHERE session_id = ?
-    `,
+    `SELECT name, class, background, goal, alignment FROM players WHERE session_id = ?`,
     [sessionId],
     (err, player) => {
       if (err) {
-        console.error("Admin player error:", err);
+        console.error("[ADMIN] Load player failed:", err);
         return res.status(500).json({ error: "DB error" });
       }
 
@@ -175,7 +154,7 @@ app.get("/api/admin/session/:id", requireAdmin, (req, res) => {
         [sessionId],
         (err2, state) => {
           if (err2) {
-            console.error("Admin state error:", err2);
+            console.error("[ADMIN] Load state failed:", err2);
             return res.status(500).json({ error: "DB error" });
           }
 
@@ -192,11 +171,11 @@ app.get("/api/admin/session/:id", requireAdmin, (req, res) => {
             [sessionId],
             (err3, turns) => {
               if (err3) {
-                console.error("Admin turns error:", err3);
+                console.error("[ADMIN] Load turns failed:", err3);
                 return res.status(500).json({ error: "DB error" });
               }
 
-              result.turns = (turns || []).reverse(); // oldest → newest
+              result.turns = (turns || []).reverse();
               res.json(result);
             }
           );
@@ -206,7 +185,9 @@ app.get("/api/admin/session/:id", requireAdmin, (req, res) => {
   );
 });
 
-// Delete ONE session + all its data
+// ==================================================
+// ADMIN — DELETE ONE SESSION
+// ==================================================
 app.delete("/api/admin/session/:id", requireAdmin, (req, res) => {
   const sessionId = req.params.id;
 
@@ -214,42 +195,29 @@ app.delete("/api/admin/session/:id", requireAdmin, (req, res) => {
     db.run("DELETE FROM turns WHERE session_id = ?", [sessionId]);
     db.run("DELETE FROM state WHERE session_id = ?", [sessionId]);
     db.run("DELETE FROM players WHERE session_id = ?", [sessionId]);
-    db.run("DELETE FROM sessions WHERE id = ?", [sessionId], (err) => {
+    db.run("DELETE FROM sessions WHERE id = ?", [sessionId], err => {
       if (err) {
-        console.error("Admin delete session error:", err);
-        return res.status(500).json({ error: "DB error" });
+        console.error("[ADMIN] Delete session failed:", err);
+        return res.status(500).json({ error: "DB error deleting session" });
       }
+
       res.json({ ok: true });
     });
   });
 });
 
-// Delete ALL sessions + all related data (POST version)
-app.post("/api/admin/sessions/delete-all", requireAdmin, (req, res) => {
-  db.serialize(() => {
-    db.run("DELETE FROM turns");
-    db.run("DELETE FROM state");
-    db.run("DELETE FROM players");
-    db.run("DELETE FROM sessions", (err) => {
-      if (err) {
-        console.error("Admin delete-all sessions error:", err);
-        return res.status(500).json({ error: "DB error" });
-      }
-      res.json({ ok: true });
-    });
-  });
-});
-
-// Delete ALL sessions + all related data (DELETE alias used by UI)
+// ==================================================
+// ADMIN — DELETE ALL SESSIONS
+// ==================================================
 app.delete("/api/admin/sessions", requireAdmin, (req, res) => {
   db.serialize(() => {
     db.run("DELETE FROM turns");
     db.run("DELETE FROM state");
     db.run("DELETE FROM players");
-    db.run("DELETE FROM sessions", (err) => {
+    db.run("DELETE FROM sessions", err => {
       if (err) {
-        console.error("Admin delete-all sessions error:", err);
-        return res.status(500).json({ error: "DB error" });
+        console.error("[ADMIN] Delete-all failed:", err);
+        return res.status(500).json({ error: "DB error deleting all sessions" });
       }
       res.json({ ok: true });
     });
@@ -257,18 +225,15 @@ app.delete("/api/admin/sessions", requireAdmin, (req, res) => {
 });
 
 // ==================================================
-// PLAYER-FACING APIs
+// PLAYER — CHARACTER APIs
 // ==================================================
-
-// --- Character setup APIs ---
-
 app.get("/api/character", (req, res) => {
   db.get(
     "SELECT name, class, background, goal, alignment FROM players WHERE session_id = ?",
     [req.sessionId],
     (err, row) => {
       if (err) {
-        console.error(err);
+        console.error("[CHAR] Load failed:", err);
         return res.status(500).json({ error: "DB error" });
       }
       res.json(row || null);
@@ -292,13 +257,12 @@ app.post("/api/character", (req, res) => {
         updated_at = CURRENT_TIMESTAMP
     `,
     [req.sessionId, name, playerClass, background, goal, alignment],
-    (err) => {
+    err => {
       if (err) {
-        console.error(err);
+        console.error("[CHAR] Save failed:", err);
         return res.status(500).json({ error: "DB error" });
       }
 
-      // Initialize basic state if not exists
       db.run(
         `
           INSERT OR IGNORE INTO state (session_id, location, health, mana, gold, inventory)
@@ -319,42 +283,44 @@ app.post("/api/character", (req, res) => {
   );
 });
 
-// --- Game turn API ---
-
+// ==================================================
+// PLAYER — GAME TURN
+// ==================================================
 app.post("/api/turn", async (req, res) => {
   const { message } = req.body;
 
-  if (!message || typeof message !== "string") {
-    return res.status(400).json({ error: "message is required" });
-  }
+  if (!message) return res.status(400).json({ error: "message is required" });
 
   try {
     const reply = await runGameTurn(req.sessionId, message);
     res.json({ reply });
   } catch (e) {
-    console.error("DeepSeek error:", e);
+    console.error("[TURN] Error:", e);
     res.status(500).json({ error: "Failed to run game turn" });
   }
 });
 
-// --- History API (last ~3 interactions: up to 6 messages) ---
-
+// ==================================================
+// PLAYER — HISTORY
+// ==================================================
 app.get("/api/history", async (req, res) => {
   try {
-    // 6 messages ≈ last 3 user+GM exchanges
     const turns = await getTurnsForSession(req.sessionId, 6);
     res.json({ turns });
   } catch (err) {
-    console.error("Error fetching history:", err);
+    console.error("[HISTORY] Error:", err);
     res.status(500).json({ error: "Failed to load history" });
   }
 });
 
-// Simple health check
+// ==================================================
+// HEALTH CHECK
+// ==================================================
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", sessionId: req.sessionId });
 });
 
+// ==================================================
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

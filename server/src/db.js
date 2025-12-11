@@ -61,3 +61,75 @@ db.serialize(() => {
     )
   `);
 });
+
+/**
+ * Promise wrapper helpers for common DB operations
+ */
+
+export function runAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) return reject(err);
+      // resolve with the 'this' context (lastID, changes) when useful
+      resolve(this);
+    });
+  });
+}
+
+export function getAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+}
+
+export function allAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
+/**
+ * Convenience helpers used by server/game logic and admin controllers
+ */
+
+export async function getTurnsForSession(sessionId, limit = 20) {
+  const rows = await allAsync(
+    `SELECT role, content, created_at FROM turns WHERE session_id = ? ORDER BY id DESC LIMIT ?`,
+    [sessionId, limit]
+  );
+  return rows.reverse();
+}
+
+export async function deleteSession(sessionId) {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run("DELETE FROM turns WHERE session_id = ?", [sessionId]);
+      db.run("DELETE FROM state WHERE session_id = ?", [sessionId]);
+      db.run("DELETE FROM players WHERE session_id = ?", [sessionId]);
+      db.run("DELETE FROM sessions WHERE id = ?", [sessionId], function (err) {
+        if (err) return reject(err);
+        resolve({ ok: true, changes: this.changes });
+      });
+    });
+  });
+}
+
+export async function deleteAllSessions() {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run("DELETE FROM turns");
+      db.run("DELETE FROM state");
+      db.run("DELETE FROM players");
+      db.run("DELETE FROM sessions", function (err) {
+        if (err) return reject(err);
+        resolve({ ok: true, changes: this.changes });
+      });
+    });
+  });
+}
