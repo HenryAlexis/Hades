@@ -6,12 +6,17 @@ export function LoreNode({
   depth,
   children,
   isSelected,
+  hasChildren,
+  isExpanded,
+  onToggleExpanded,
   onSelect,
   onAddChild,
   onDelete
 }) {
+  const indent = Math.min(depth * 18, 200);
+
   return (
-    <div className="lore-node" style={{ marginLeft: depth * 24 }}>
+    <div className="lore-node" style={{ marginLeft: indent }}>
       <div
         className={`lore-node-box ${isSelected ? "is-selected" : ""}`}
         role="button"
@@ -22,8 +27,23 @@ export function LoreNode({
         }}
         aria-label={`Lore node ${node.title || "Untitled"}`}
       >
-        <div className="lore-node-title">
-          <strong>{node.title || "Untitled"}</strong>
+        <div className="lore-node-left">
+          <button
+            type="button"
+            className="lore-caret"
+            title={hasChildren ? (isExpanded ? "Collapse" : "Expand") : "No children"}
+            disabled={!hasChildren}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hasChildren) onToggleExpanded?.(node.id);
+            }}
+          >
+            {hasChildren ? (isExpanded ? "▾" : "▸") : "•"}
+          </button>
+
+          <div className="lore-node-title">
+            <strong>{node.title || "Untitled"}</strong>
+          </div>
         </div>
 
         <div className="lore-node-actions">
@@ -32,7 +52,7 @@ export function LoreNode({
             title="Add child"
             onClick={(e) => {
               e.stopPropagation();
-              onAddChild(node.id);
+              onAddChild?.(node.id);
             }}
           >
             +
@@ -42,7 +62,7 @@ export function LoreNode({
             title="Delete"
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(node.id);
+              onDelete?.(node.id);
             }}
           >
             ✕

@@ -19,12 +19,19 @@ function requireAdmin(req, res, next) {
 router.get("/", requireAdmin, (req, res) => {
   db.all(
     `
-      SELECT id, parent_id, title, body, sort_order, created_at, updated_at
+      SELECT
+        id,
+        parent_id,
+        title,
+        content AS body,
+        position AS sort_order,
+        created_at,
+        updated_at
       FROM lore_nodes
       ORDER BY
         (parent_id IS NOT NULL) ASC,
         parent_id ASC,
-        sort_order ASC,
+        position ASC,
         id ASC
     `,
     [],
@@ -60,7 +67,7 @@ router.post("/", requireAdmin, (req, res) => {
 
   db.run(
     `
-      INSERT INTO lore_nodes (parent_id, title, body, sort_order, created_at, updated_at)
+      INSERT INTO lore_nodes (parent_id, title, content, position, created_at, updated_at)
       VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `,
     [parentIdValue, title, typeof body === "string" ? body : "", sortOrderValue],
@@ -90,11 +97,11 @@ router.patch("/:id", requireAdmin, (req, res) => {
     params.push(title);
   }
   if (typeof body === "string") {
-    fields.push("body = ?");
+    fields.push("content = ?");
     params.push(body);
   }
   if (typeof sort_order === "number" || typeof sort_order === "string") {
-    fields.push("sort_order = ?");
+    fields.push("position = ?");
     params.push(typeof sort_order === "number" ? sort_order : Number(sort_order) || 0);
   }
 

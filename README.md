@@ -32,6 +32,9 @@ This README describes the current codebase—including foundational backend impr
 - Session list (no empty/ghost sessions) with class/goal context
 - Per-session drilldown: player profile, state, last 30 turns
 - Delete one session, reset one session (keep player), or delete all sessions
+- Lore Editor (`/admin` → Write Lore)
+  - Tree-based nested sections (root → children), edit title/body, delete cascades
+  - Stored in SQLite `lore_nodes` with parent-child relationships
 - Login/logout cookies for admin-only endpoints
 - Stats header (totals, today’s sessions, mode: dummy vs live)
 
@@ -113,6 +116,7 @@ web/
 - Player session middleware sets a cookie + upserts session rows; admin + health routes bypass it
 - Admin auth is a simple password stored in env; login sets `admin_auth` cookie
 - SQLite schema auto-initializes
+- Existing `game.db` files created before the lore foreign key existed require a migration to enforce `ON DELETE CASCADE` on `lore_nodes`
 - Dummy seed data loads only on empty DB
 - Short-context prompt used for AI
 

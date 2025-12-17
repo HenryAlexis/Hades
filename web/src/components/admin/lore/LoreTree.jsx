@@ -4,6 +4,9 @@ import { LoreNode } from "./LoreNode";
 
 export function LoreTree({
   nodes,
+  childMap,
+  expanded,
+  onToggleExpanded,
   selectedId,
   onSelect,
   onAddChild,
@@ -42,19 +45,28 @@ export function LoreTree({
   }, [nodes]);
 
   function render(parentKey = "root", depth = 0) {
-    return (byParent[parentKey] || []).map((node) => (
-      <LoreNode
-        key={node.id}
-        node={node}
-        depth={depth}
-        isSelected={String(selectedId) === String(node.id)}
-        onSelect={onSelect}
-        onAddChild={onAddChild}
-        onDelete={onDelete}
-      >
-        {render(String(node.id), depth + 1)}
-      </LoreNode>
-    ));
+    return (byParent[parentKey] || []).map((node) => {
+      const nodeId = String(node.id);
+      const hasChildren = (childMap?.[nodeId] || []).length > 0;
+      const isExpanded = expanded?.has?.(nodeId) ?? false;
+
+      return (
+        <LoreNode
+          key={node.id}
+          node={node}
+          depth={depth}
+          isSelected={String(selectedId) === nodeId}
+          hasChildren={hasChildren}
+          isExpanded={isExpanded}
+          onToggleExpanded={onToggleExpanded}
+          onSelect={onSelect}
+          onAddChild={onAddChild}
+          onDelete={onDelete}
+        >
+          {hasChildren && isExpanded ? render(nodeId, depth + 1) : null}
+        </LoreNode>
+      );
+    });
   }
 
   return <div className="lore-tree-inner">{render()}</div>;

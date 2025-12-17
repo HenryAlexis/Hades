@@ -238,6 +238,77 @@
   color: #ffe3e3;
 }
 
+/* --- Step 7 additions --- */
+
+.lore-savebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.lore-savebadge {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #4a3823;
+  background: rgba(0, 0, 0, 0.25);
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.lore-savebadge[data-state="dirty"] {
+  border-color: #d7b27a;
+}
+
+.lore-savebadge[data-state="saving"] {
+  border-color: #6a5638;
+  opacity: 0.85;
+}
+
+.lore-savebadge[data-state="saved"] {
+  border-color: #6fa86f;
+}
+
+.lore-savebadge[data-state="error"] {
+  border-color: #aa3333;
+}
+
+.lore-savebar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Node left side (caret + title) */
+.lore-node-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.lore-caret {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #4a3823;
+  background: linear-gradient(#3b2a14, #22160b);
+  color: #f3e6d0;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.lore-caret:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* Mobile / narrow screens */
 @media (max-width: 900px) {
   .lore-layout {
