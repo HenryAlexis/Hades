@@ -1,0 +1,250 @@
+// web/src/components/admin/lore/lore.less
+
+.lore-admin {
+  padding: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Header */
+.lore-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lore-subtitle {
+  opacity: 0.75;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.lore-header button {
+  border: 1px solid #4a3823;
+  background: linear-gradient(#3b2a14, #22160b);
+  color: #f3e6d0;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+}
+
+.lore-header button:hover {
+  border-color: #6a5638;
+}
+
+.lore-header button:active {
+  transform: translateY(1px);
+}
+
+.lore-error {
+  border: 1px solid #aa3333;
+  background: rgba(120, 16, 16, 0.25);
+  color: #ffe3e3;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+}
+
+/* Main split layout: tree (left) + editor (right) */
+.lore-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+}
+
+/* Left panel (tree) */
+.lore-tree {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(10, 8, 6, 0.65);
+}
+
+.lore-tree-inner {
+  padding-bottom: 0.75rem;
+}
+
+/* Node layout */
+.lore-node {
+  margin-bottom: 0.45rem;
+}
+
+/* Clickable node box */
+.lore-node-box {
+  background: linear-gradient(#2a1e0f, #1b130b);
+  border: 1px solid #4a3823;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.lore-node-box:hover {
+  border-color: #6a5638;
+  background: linear-gradient(#332512, #1b130b);
+}
+
+.lore-node-box:focus {
+  box-shadow: 0 0 0 2px rgba(255, 230, 180, 0.25);
+}
+
+.lore-node-box.is-selected {
+  border-color: #d7b27a;
+  box-shadow: 0 0 0 2px rgba(215, 178, 122, 0.25);
+}
+
+.lore-node-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.lore-node-title strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Node actions */
+.lore-node-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.lore-node-actions button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #4a3823;
+  background: linear-gradient(#3b2a14, #22160b);
+  color: #f3e6d0;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.lore-node-actions button:hover {
+  border-color: #6a5638;
+}
+
+.lore-node-actions button:active {
+  transform: translateY(1px);
+}
+
+/* Right panel (editor) */
+.lore-editor {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: rgba(10, 8, 6, 0.65);
+}
+
+.lore-empty {
+  opacity: 0.75;
+  padding: 0.75rem;
+  border: 1px dashed #4a3823;
+  border-radius: 10px;
+}
+
+.lore-editor-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.lore-label {
+  opacity: 0.85;
+  font-size: 0.9rem;
+}
+
+.lore-input {
+  width: 100%;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  color: #f3e6d0;
+  outline: none;
+}
+
+.lore-input:focus {
+  border-color: #d7b27a;
+  box-shadow: 0 0 0 2px rgba(215, 178, 122, 0.2);
+}
+
+.lore-textarea {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  color: #f3e6d0;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.4;
+  outline: none;
+}
+
+.lore-textarea:focus {
+  border-color: #d7b27a;
+  box-shadow: 0 0 0 2px rgba(215, 178, 122, 0.2);
+}
+
+.lore-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.lore-actions button {
+  border: 1px solid #4a3823;
+  background: linear-gradient(#3b2a14, #22160b);
+  color: #f3e6d0;
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+}
+
+.lore-actions button:hover {
+  border-color: #6a5638;
+}
+
+.lore-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lore-actions .lore-danger {
+  border-color: #aa3333;
+  background: linear-gradient(#5b1010, #3b0505);
+  color: #ffe3e3;
+}
+
+/* Mobile / narrow screens */
+@media (max-width: 900px) {
+  .lore-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lore-tree {
+    max-height: 40vh;
+  }
+}

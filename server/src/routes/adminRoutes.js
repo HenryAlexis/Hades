@@ -1,6 +1,7 @@
 // server/src/routes/adminRoutes.js
 import express from "express";
 import { db } from "../db.js";
+import { adminLoreRouter } from "./adminLoreRoutes.js";
 
 const router = express.Router();
 
@@ -306,5 +307,10 @@ router.delete("/sessions", requireAdmin, (req, res) => {
     });
   });
 });
+
+// ==================================================
+// ADMIN — LORE TREE ROUTES
+// ==================================================
+router.use("/lore", requireAdmin, adminLoreRouter);
 
 export { router as adminRouter };

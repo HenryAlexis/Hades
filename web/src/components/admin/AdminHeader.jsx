@@ -1,3 +1,4 @@
+// web/src/components/admin/AdminHeader.jsx
 import React from "react";
 
 export function AdminHeader({
@@ -6,7 +7,8 @@ export function AdminHeader({
   sessionsCount,
   sessionsLoading,
   onRefreshStats,
-  onLogout
+  onLogout,
+  view // "sessions" | "lore"
 }) {
   return (
     <div
@@ -18,35 +20,79 @@ export function AdminHeader({
         gap: 16
       }}
     >
+      {/* LEFT SIDE */}
       <div>
-        <div style={{ fontSize: "1.1rem" }}>Admin: Lower Lands Oracle</div>
-
-        {/* Sessions info */}
-        <div className="medieval-stats">
-          Sessions: {sessionsCount} {sessionsLoading ? "(loading…)" : ""}
+        <div style={{ fontSize: "1.1rem" }}>
+          Admin: Lower Lands Oracle
         </div>
 
-        {/* Global stats if available */}
+        {/* Current section indicator */}
+        <div
+          style={{
+            fontSize: "0.85rem",
+            opacity: 0.8,
+            marginTop: 2
+          }}
+        >
+          Section:{" "}
+          <strong>
+            {view === "lore" ? "Lore Editor" : "Sessions"}
+          </strong>
+        </div>
+
+        {/* Sessions info */}
+        <div className="medieval-stats" style={{ marginTop: 4 }}>
+          Sessions: {sessionsCount}
+          {sessionsLoading ? " (loading…)" : ""}
+        </div>
+
+        {/* Optional global stats */}
         {stats && (
           <div
             className="medieval-stats"
-            style={{ marginTop: 4, opacity: 0.85, fontSize: "0.85rem" }}
+            style={{
+              marginTop: 6,
+              opacity: 0.85,
+              fontSize: "0.85rem"
+            }}
           >
-            <div>Total Sessions Ever: {stats.totalSessions}</div>
-            <div>Active Today: {stats.activeToday}</div>
-            <div>Mode: {stats.mode === "dummy" ? "Dummy Data" : "Live Data"}</div>
+            {"totalSessions" in stats && (
+              <div>Total Sessions Ever: {stats.totalSessions}</div>
+            )}
+            {"activeToday" in stats && (
+              <div>Active Today: {stats.activeToday}</div>
+            )}
+            {"mode" in stats && (
+              <div>
+                Mode: {stats.mode === "dummy" ? "Dummy Data" : "Live Data"}
+              </div>
+            )}
           </div>
         )}
 
         {statsLoading && (
-          <div style={{ fontSize: "0.8rem", opacity: 0.7 }}>Updating stats…</div>
+          <div
+            style={{
+              fontSize: "0.8rem",
+              opacity: 0.7,
+              marginTop: 4
+            }}
+          >
+            Updating stats…
+          </div>
         )}
       </div>
 
-      {/* Right side buttons */}
+      {/* RIGHT SIDE ACTIONS */}
       <div style={{ display: "flex", gap: 10 }}>
-        <button onClick={onRefreshStats}>Refresh Stats</button>
-        <button onClick={onLogout}>Leave Admin</button>
+        {onRefreshStats && (
+          <button onClick={onRefreshStats}>
+            Refresh Stats
+          </button>
+        )}
+        <button onClick={onLogout}>
+          Leave Admin
+        </button>
       </div>
     </div>
   );
