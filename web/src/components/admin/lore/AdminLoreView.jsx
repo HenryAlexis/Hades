@@ -8,7 +8,10 @@ import {
   fetchAdminLoreFeatures,
   createAdminLoreFeature,
   updateAdminLoreFeature,
-  deleteAdminLoreFeature
+  deleteAdminLoreFeature,
+  fetchAdminCharacters,
+  fetchLoreNodeCharacters,
+  updateLoreNodeCharacters
 } from "../../../api";
 import { LoreTree } from "./LoreTree";
 import "./lore.less";
@@ -46,6 +49,15 @@ export function AdminLoreView() {
   const [featuresError, setFeaturesError] = useState("");
   const [featureSavingId, setFeatureSavingId] = useState(null);
   const [featuresExpanded, setFeaturesExpanded] = useState(false);
+  const featureSaveTimersRef = useRef({});
+
+  // Characters + node links
+  const [characters, setCharacters] = useState([]);
+  const [charactersError, setCharactersError] = useState("");
+  const [charactersLoading, setCharactersLoading] = useState(false);
+  const [nodeCharacterSelections, setNodeCharacterSelections] = useState({});
+  const [nodeCharactersLoading, setNodeCharactersLoading] = useState(false);
+  const [nodeCharactersLoaded, setNodeCharactersLoaded] = useState(new Set());
 
   // Autosave UX states
   const [saveState, setSaveState] = useState("idle"); // idle | dirty | saving | saved | error
@@ -212,10 +224,10 @@ export function AdminLoreView() {
     await loadLore({ keepSelection: true });
   }
 
-  async function doSaveNow({ force = false } = {}) {
+  async function doSaveNow({ force = false, titleOverride, bodyOverride } = {}) {
     if (!selectedNode) return;
-    const title = draftTitle;
-    const body = draftBody;
+    const title = titleOverride ?? draftTitle;
+    const body = bodyOverride ?? draftBody;
 
     // If not dirty and not forced, skip
     const last = lastSavedRef.current;
@@ -273,7 +285,7 @@ export function AdminLoreView() {
     markDirtyIfChanged(nextTitle, nextBody);
 
     saveTimerRef.current = setTimeout(() => {
-      doSaveNow();
+      doSaveNow({ titleOverride: nextTitle, bodyOverride: nextBody });
     }, 650); // debounce window
   }
 
@@ -291,6 +303,7 @@ export function AdminLoreView() {
     if (!nodeId) {
       setFeatures([]);
       setFeaturesError("");
+      featureSaveTimersRef.current = {};
       return;
     }
     setFeaturesLoading(true);
@@ -303,6 +316,7 @@ export function AdminLoreView() {
         return;
       }
       setFeatures(res.features || []);
+      featureSaveTimersRef.current = {};
     } catch (e) {
       console.error("[LORE] load features failed:", e);
       setFeaturesError("Failed to load features");
@@ -322,6 +336,85 @@ export function AdminLoreView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNode?.id]);
 
+  // Load characters list once
+  useEffect(() => {
+    (async () => {
+      setCharactersLoading(true);
+      setCharactersError("");
+      try {
+        const res = await fetchAdminCharacters();
+        if (res?.error) {
+          setCharactersError(res.error);
+          setCharacters([]);
+          return;
+        }
+        setCharacters(res.characters || []);
+      } catch (e) {
+        console.error("[LORE] load characters failed:", e);
+        setCharactersError("Failed to load characters");
+        setCharacters([]);
+      } finally {
+        setCharactersLoading(false);
+      }
+    })();
+  }, []);
+
+  async function loadNodeCharacters(nodeId) {
+    if (!nodeId) return;
+    setNodeCharactersLoading(true);
+    try {
+      const res = await fetchLoreNodeCharacters(nodeId);
+      if (res?.error) {
+        setCharactersError(res.error);
+        setNodeCharacterSelections((prev) => ({ ...prev, [String(nodeId)]: [] }));
+        return;
+      }
+      setNodeCharacterSelections((prev) => ({
+        ...prev,
+        [String(nodeId)]: res.characterIds || []
+      }));
+      setNodeCharactersLoaded((prev) => {
+        const next = new Set(prev);
+        next.add(String(nodeId));
+        return next;
+      });
+    } catch (e) {
+      console.error("[LORE] load node characters failed:", e);
+      setCharactersError("Failed to load linked characters");
+    } finally {
+      setNodeCharactersLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (selectedNode?.id) loadNodeCharacters(selectedNode.id);
+  }, [selectedNode?.id]);
+
+  async function handleUpdateNodeCharacters(nodeId, ids) {
+    if (!nodeId) return;
+    setNodeCharactersLoading(true);
+    setCharactersError("");
+    try {
+      const res = await updateLoreNodeCharacters(nodeId, ids || []);
+      if (res?.error) {
+        setCharactersError(res.error);
+        return;
+      }
+      setNodeCharacterSelections((prev) => ({ ...prev, [String(nodeId)]: ids || [] }));
+    } catch (e) {
+      console.error("[LORE] update node characters failed:", e);
+      setCharactersError("Failed to update characters");
+    } finally {
+      setNodeCharactersLoading(false);
+    }
+  }
+
+  function ensureNodeCharacters(nodeId) {
+    const key = String(nodeId);
+    if (nodeCharactersLoaded.has(key)) return;
+    loadNodeCharacters(nodeId);
+  }
+
   async function handleAddFeature() {
     if (!selectedNode?.id) return;
     const title = prompt("Feature title:");
@@ -338,6 +431,7 @@ export function AdminLoreView() {
         return;
       }
       await loadFeatures(selectedNode.id);
+      featureSaveTimersRef.current = {};
     } catch (e) {
       console.error("[LORE] add feature failed:", e);
       setFeaturesError("Failed to add feature");
@@ -379,6 +473,10 @@ export function AdminLoreView() {
         return;
       }
       await loadFeatures(selectedNode.id);
+      if (featureSaveTimersRef.current[String(id)]) {
+        clearTimeout(featureSaveTimersRef.current[String(id)]);
+        featureSaveTimersRef.current[String(id)] = null;
+      }
     } catch (e) {
       console.error("[LORE] delete feature failed:", e);
       setFeaturesError("Failed to delete feature");
@@ -391,6 +489,38 @@ export function AdminLoreView() {
     setFeatures((prev) =>
       prev.map((f) => (String(f.id) === String(id) ? { ...f, [field]: value } : f))
     );
+    const target = (features || []).find((f) => String(f.id) === String(id));
+    if (target) {
+      const nextFeature = { ...target, [field]: value };
+      scheduleFeatureAutosave(nextFeature);
+    }
+  }
+
+  function scheduleFeatureAutosave(feature) {
+    if (!feature?.id) return;
+    const key = String(feature.id);
+    if (featureSaveTimersRef.current[key]) clearTimeout(featureSaveTimersRef.current[key]);
+
+    featureSaveTimersRef.current[key] = setTimeout(async () => {
+      setFeatureSavingId(feature.id);
+      setFeaturesError("");
+      try {
+        const res = await updateAdminLoreFeature(feature.id, {
+          title: feature.title ?? "",
+          value: feature.value ?? "",
+          sort_order: feature.sort_order ?? 0
+        });
+        if (res?.error) {
+          setFeaturesError(res.error);
+        }
+      } catch (e) {
+        console.error("[LORE] feature autosave failed:", e);
+        setFeaturesError("Failed to save feature");
+      } finally {
+        setFeatureSavingId((current) => (current === feature.id ? null : current));
+        featureSaveTimersRef.current[key] = null;
+      }
+    }, 650);
   }
 
   return (
@@ -422,6 +552,10 @@ export function AdminLoreView() {
               onAddChild={handleAddChild}
               onDelete={handleDelete}
               featureCountsByNodeId={featureCountsByNodeId}
+              characterOptions={characters}
+              characterSelections={nodeCharacterSelections}
+              onEnsureNodeCharacters={ensureNodeCharacters}
+              onUpdateCharacters={handleUpdateNodeCharacters}
             />
           </div>
 

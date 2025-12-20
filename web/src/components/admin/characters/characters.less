@@ -1,0 +1,70 @@
+// web/src/components/admin/characters/characters.less
+
+.admin-characters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-characters .characters-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1rem;
+}
+
+.admin-characters .characters-list {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(10, 8, 6, 0.65);
+}
+
+.admin-characters .characters-editor {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid #4a3823;
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: rgba(10, 8, 6, 0.65);
+}
+
+.admin-characters .characters-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.admin-characters .attr-row {
+  border: 1px solid #2f4356;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(135deg, rgba(18, 26, 36, 0.85), rgba(12, 18, 26, 0.7));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.admin-characters .attr-row + .attr-row {
+  margin-top: 8px;
+}
+
+.admin-characters .attr-row.is-collapsed {
+  opacity: 0.9;
+}
+
+.admin-characters .attr-row.is-expanded {
+  border-color: #4a6682;
+  box-shadow: 0 0 0 1px rgba(74, 102, 130, 0.35);
+}
+
+.admin-characters .attr-key,
+.admin-characters .attr-value {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

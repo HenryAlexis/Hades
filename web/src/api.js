@@ -187,3 +187,71 @@ export function deleteAdminLoreFeature(featureId) {
     method: "DELETE"
   });
 }
+
+// ---------------- Admin Characters APIs ----------------
+
+export function fetchAdminCharacters() {
+  return request("/admin/characters");
+}
+
+export function createAdminCharacter(payload) {
+  return request("/admin/characters", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateAdminCharacter(id, payload) {
+  return request(`/admin/characters/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteAdminCharacter(id) {
+  return request(`/admin/characters/${encodeURIComponent(id)}`, {
+    method: "DELETE"
+  });
+}
+
+// Character attributes
+export function fetchAdminCharacterAttrs(characterId) {
+  return request(`/admin/characters/${encodeURIComponent(characterId)}/attributes`);
+}
+
+export function createAdminCharacterAttr(characterId, payload) {
+  return request(`/admin/characters/${encodeURIComponent(characterId)}/attributes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateAdminCharacterAttr(attrId, payload) {
+  return request(`/admin/characters/attribute/${encodeURIComponent(attrId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteAdminCharacterAttr(attrId) {
+  return request(`/admin/characters/attribute/${encodeURIComponent(attrId)}`, {
+    method: "DELETE"
+  });
+}
+
+// Lore node character links
+export function fetchLoreNodeCharacters(nodeId) {
+  return request(`/admin/lore/${encodeURIComponent(nodeId)}/characters`);
+}
+
+export function updateLoreNodeCharacters(nodeId, characterIds) {
+  return request(`/admin/lore/${encodeURIComponent(nodeId)}/characters`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ characterIds })
+  });
+}

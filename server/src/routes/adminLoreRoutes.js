@@ -281,6 +281,90 @@ router.delete("/features/:id", requireAdmin, (req, res) => {
 });
 
 // ==================================================
+// LORE NODE ↔ CHARACTERS LINKS
+// ==================================================
+// GET /api/admin/lore/:nodeId/characters
+router.get("/:nodeId/characters", requireAdmin, (req, res) => {
+  const nodeId = Number(req.params.nodeId);
+  if (Number.isNaN(nodeId)) return res.status(400).json({ error: "Invalid node id" });
+
+  db.get(`SELECT id FROM lore_nodes WHERE id = ?`, [nodeId], (err, row) => {
+    if (err) {
+      console.error("[LORE] character link check failed:", err);
+      return res.status(500).json({ error: "DB error checking lore node" });
+    }
+    if (!row) return res.status(404).json({ error: "Lore node not found" });
+
+    db.all(
+      `SELECT character_id FROM lore_node_characters WHERE lore_node_id = ?`,
+      [nodeId],
+      (err2, rows) => {
+        if (err2) {
+          console.error("[LORE] character link list failed:", err2);
+          return res.status(500).json({ error: "DB error loading linked characters" });
+        }
+        res.json({ characterIds: (rows || []).map((r) => r.character_id) });
+      }
+    );
+  });
+});
+
+// PUT /api/admin/lore/:nodeId/characters
+router.put("/:nodeId/characters", requireAdmin, (req, res) => {
+  const nodeId = Number(req.params.nodeId);
+  if (Number.isNaN(nodeId)) return res.status(400).json({ error: "Invalid node id" });
+
+  const characterIds = Array.isArray(req.body?.characterIds) ? req.body.characterIds : [];
+  const cleanedIds = characterIds
+    .map((id) => Number(id))
+    .filter((n) => Number.isInteger(n) && n > 0);
+
+  db.get(`SELECT id FROM lore_nodes WHERE id = ?`, [nodeId], (err, row) => {
+    if (err) {
+      console.error("[LORE] character link check failed:", err);
+      return res.status(500).json({ error: "DB error checking lore node" });
+    }
+    if (!row) return res.status(404).json({ error: "Lore node not found" });
+
+    db.serialize(() => {
+      db.run(`DELETE FROM lore_node_characters WHERE lore_node_id = ?`, [nodeId], (delErr) => {
+        if (delErr) {
+          console.error("[LORE] character link delete failed:", delErr);
+          return res.status(500).json({ error: "DB error updating links" });
+        }
+
+        if (!cleanedIds.length) {
+          return res.json({ ok: true });
+        }
+
+        const stmt = db.prepare(
+          `INSERT OR IGNORE INTO lore_node_characters (lore_node_id, character_id) VALUES (?, ?)`
+        );
+
+        let errored = false;
+        cleanedIds.forEach((cid) => {
+          stmt.run([nodeId, cid], (insErr) => {
+            if (insErr && !errored) {
+              errored = true;
+              console.error("[LORE] character link insert failed:", insErr);
+              res.status(500).json({ error: "DB error updating links" });
+            }
+          });
+        });
+
+        stmt.finalize((finalizeErr) => {
+          if (finalizeErr) {
+            console.error("[LORE] character link finalize failed:", finalizeErr);
+            return res.status(500).json({ error: "DB error updating links" });
+          }
+          if (!errored) res.json({ ok: true });
+        });
+      });
+    });
+  });
+});
+
+// ==================================================
 // DELETE LORE NODE (CASCADE CHILDREN)
 // ==================================================
 // DELETE /api/admin/lore/:id

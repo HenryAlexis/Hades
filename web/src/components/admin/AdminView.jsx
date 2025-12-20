@@ -13,6 +13,7 @@ import { AdminHeader } from "./AdminHeader";
 import { AdminSessionList } from "./AdminSessionList";
 import { AdminSessionDetails } from "./AdminSessionDetails";
 import { AdminLoreView } from "./lore/AdminLoreView";
+import { AdminCharactersView } from "./characters/AdminCharactersView";
 
 export function AdminView() {
   const [password, setPassword] = useState("");
@@ -33,7 +34,7 @@ export function AdminView() {
   const [deletingAll, setDeletingAll] = useState(false);
 
   // which admin view is active
-  const [view, setView] = useState("sessions"); // "sessions" | "lore"
+  const [view, setView] = useState("sessions"); // "sessions" | "lore" | "characters"
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -240,18 +241,26 @@ export function AdminView() {
             onClick={() => setView("sessions")}
             disabled={view === "sessions"}
             style={navBtnStyle(view === "sessions")}
-          >
-            Sessions
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("lore")}
-            disabled={view === "lore"}
-            style={navBtnStyle(view === "lore")}
-          >
-            Write Lore
-          </button>
-        </div>
+        >
+          Sessions
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("lore")}
+          disabled={view === "lore"}
+          style={navBtnStyle(view === "lore")}
+        >
+          Write Lore
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("characters")}
+          disabled={view === "characters"}
+          style={navBtnStyle(view === "characters")}
+        >
+          Write Characters
+        </button>
+      </div>
 
         {view === "sessions" && (
           <>
@@ -293,6 +302,7 @@ export function AdminView() {
         )}
 
         {view === "lore" && <AdminLoreView />}
+        {view === "characters" && <AdminCharactersView />}
       </div>
     </div>
   );

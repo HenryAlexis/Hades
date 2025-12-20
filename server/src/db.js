@@ -106,6 +106,54 @@ db.serialize(() => {
     CREATE INDEX IF NOT EXISTS idx_lore_features_node_sort
     ON lore_features (node_id, sort_order, id);
   `);
+
+  // Characters and attributes
+  db.run(`
+    CREATE TABLE IF NOT EXISTS characters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS character_attributes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      character_id INTEGER NOT NULL,
+      attr_key TEXT,
+      attr_value TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_character_attributes_character_sort
+    ON character_attributes (character_id, sort_order, id);
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS lore_node_characters (
+      lore_node_id INTEGER NOT NULL,
+      character_id INTEGER NOT NULL,
+      PRIMARY KEY (lore_node_id, character_id),
+      FOREIGN KEY (lore_node_id) REFERENCES lore_nodes(id) ON DELETE CASCADE,
+      FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_lore_node_characters_node
+    ON lore_node_characters (lore_node_id);
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_lore_node_characters_character
+    ON lore_node_characters (character_id);
+  `);
 });
 
 /**

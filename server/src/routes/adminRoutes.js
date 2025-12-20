@@ -2,6 +2,7 @@
 import express from "express";
 import { db } from "../db.js";
 import { adminLoreRouter } from "./adminLoreRoutes.js";
+import { adminCharacterRouter } from "./adminCharacterRoutes.js";
 
 const router = express.Router();
 
@@ -312,5 +313,6 @@ router.delete("/sessions", requireAdmin, (req, res) => {
 // ADMIN — LORE TREE ROUTES
 // ==================================================
 router.use("/lore", requireAdmin, adminLoreRouter);
+router.use("/characters", requireAdmin, adminCharacterRouter);
 
 export { router as adminRouter };
