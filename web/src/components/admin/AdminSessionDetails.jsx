@@ -16,8 +16,8 @@ export function AdminSessionDetails({
     >
       {!selectedSessionId && (
         <div style={{ color: "#ccc", fontSize: "0.95rem" }}>
-          Select a session on the left to inspect the player, state and
-          recent history.
+          Select a session on the left to inspect the player, state and recent
+          history.
         </div>
       )}
 
@@ -33,6 +33,35 @@ export function AdminSessionDetails({
 
       {sessionDetails && !detailsLoading && (
         <div style={{ fontSize: "0.95rem" }}>
+          {/* Session meta */}
+          <div
+            style={{
+              marginBottom: "0.75rem",
+              padding: "0.5rem 0.75rem",
+              borderRadius: 4,
+              border: "1px solid #3a2d1a",
+              background: "rgba(10, 10, 15, 0.7)",
+              fontSize: "0.8rem",
+              lineHeight: 1.4
+            }}
+          >
+            <div>
+              <strong>Session ID:</strong> {sessionDetails.sessionId}
+            </div>
+            {sessionDetails.created_at && (
+              <div>
+                <strong>Created:</strong>{" "}
+                {new Date(sessionDetails.created_at).toLocaleString()}
+              </div>
+            )}
+            {sessionDetails.updated_at && (
+              <div>
+                <strong>Last Activity:</strong>{" "}
+                {new Date(sessionDetails.updated_at).toLocaleString()}
+              </div>
+            )}
+          </div>
+
           {/* Player info */}
           <h3 style={{ marginBottom: "0.5rem" }}>Player</h3>
           <div style={{ marginBottom: "0.75rem" }}>

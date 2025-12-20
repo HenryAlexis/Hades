@@ -1,3 +1,4 @@
+// server/src/db.js
 import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -12,6 +13,9 @@ export const db = new sqlite.Database(dbPath);
 
 // init tables
 db.serialize(() => {
+  // Enforce foreign keys (needed for ON DELETE CASCADE)
+  db.run(`PRAGMA foreign_keys = ON;`);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
@@ -60,6 +64,29 @@ db.serialize(() => {
       inventory TEXT
     )
   `);
+
+  // ==================================================
+  // LORE TREE (Admin-authored)
+  // ==================================================
+  // Matches adminLoreRoutes.js expectations:
+  // id, parent_id, title, content, position, created_at, updated_at
+  db.run(`
+    CREATE TABLE IF NOT EXISTS lore_nodes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      parent_id INTEGER NULL,
+      title TEXT NOT NULL DEFAULT '',
+      content TEXT NOT NULL DEFAULT '',
+      position INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (parent_id) REFERENCES lore_nodes(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_lore_nodes_parent_position
+    ON lore_nodes (parent_id, position, id);
+  `);
 });
 
 /**
@@ -70,8 +97,7 @@ export function runAsync(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
       if (err) return reject(err);
-      // resolve with the 'this' context (lastID, changes) when useful
-      resolve(this);
+      resolve(this); // lastID, changes
     });
   });
 }
