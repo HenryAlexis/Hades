@@ -10,7 +10,8 @@ export function LoreTree({
   selectedId,
   onSelect,
   onAddChild,
-  onDelete
+  onDelete,
+  featureCountsByNodeId
 }) {
   const byParent = useMemo(() => {
     const map = {};
@@ -62,6 +63,7 @@ export function LoreTree({
           onSelect={onSelect}
           onAddChild={onAddChild}
           onDelete={onDelete}
+          featureCount={featureCountsByNodeId?.[nodeId]}
         >
           {hasChildren && isExpanded ? render(nodeId, depth + 1) : null}
         </LoreNode>

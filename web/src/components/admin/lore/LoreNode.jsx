@@ -11,7 +11,8 @@ export function LoreNode({
   onToggleExpanded,
   onSelect,
   onAddChild,
-  onDelete
+  onDelete,
+  featureCount
 }) {
   const indent = Math.min(depth * 18, 200);
 
@@ -43,6 +44,21 @@ export function LoreNode({
 
           <div className="lore-node-title">
             <strong>{node.title || "Untitled"}</strong>
+            {typeof featureCount === "number" && featureCount > 0 && (
+              <span
+                style={{
+                  marginLeft: 8,
+                  fontSize: "0.8rem",
+                  opacity: 0.8,
+                  padding: "1px 6px",
+                  borderRadius: 10,
+                  border: "1px solid #3a2a16",
+                  background: "rgba(255, 255, 255, 0.06)"
+                }}
+              >
+                • {featureCount}
+              </span>
+            )}
           </div>
         </div>
 

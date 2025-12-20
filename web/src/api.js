@@ -161,3 +161,29 @@ export function deleteAdminLoreNode(id) {
     method: "DELETE"
   });
 }
+
+export function fetchAdminLoreFeatures(nodeId) {
+  return request(`/admin/lore/${encodeURIComponent(nodeId)}/features`);
+}
+
+export function createAdminLoreFeature(nodeId, payload) {
+  return request(`/admin/lore/${encodeURIComponent(nodeId)}/features`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateAdminLoreFeature(featureId, payload) {
+  return request(`/admin/lore/features/${encodeURIComponent(featureId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteAdminLoreFeature(featureId) {
+  return request(`/admin/lore/features/${encodeURIComponent(featureId)}`, {
+    method: "DELETE"
+  });
+}

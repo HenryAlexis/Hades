@@ -4,7 +4,11 @@ import {
   fetchAdminLore,
   createAdminLoreNode,
   updateAdminLoreNode,
-  deleteAdminLoreNode
+  deleteAdminLoreNode,
+  fetchAdminLoreFeatures,
+  createAdminLoreFeature,
+  updateAdminLoreFeature,
+  deleteAdminLoreFeature
 } from "../../../api";
 import { LoreTree } from "./LoreTree";
 import "./lore.less";
@@ -36,6 +40,13 @@ export function AdminLoreView() {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftBody, setDraftBody] = useState("");
 
+  // Features for selected node
+  const [features, setFeatures] = useState([]);
+  const [featuresLoading, setFeaturesLoading] = useState(false);
+  const [featuresError, setFeaturesError] = useState("");
+  const [featureSavingId, setFeatureSavingId] = useState(null);
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
+
   // Autosave UX states
   const [saveState, setSaveState] = useState("idle"); // idle | dirty | saving | saved | error
   const saveTimerRef = useRef(null);
@@ -45,6 +56,10 @@ export function AdminLoreView() {
   const [expanded, setExpanded] = useState(() => new Set());
 
   const childMap = useMemo(() => buildChildMap(nodes), [nodes]);
+  const featureCountsByNodeId = useMemo(() => {
+    if (!selectedNode?.id) return {};
+    return { [selectedNode.id]: features.length || 0 };
+  }, [selectedNode?.id, features]);
 
   async function loadLore({ keepSelection = true } = {}) {
     setLoading(true);
@@ -272,6 +287,112 @@ export function AdminLoreView() {
     });
   }
 
+  async function loadFeatures(nodeId) {
+    if (!nodeId) {
+      setFeatures([]);
+      setFeaturesError("");
+      return;
+    }
+    setFeaturesLoading(true);
+    setFeaturesError("");
+    try {
+      const res = await fetchAdminLoreFeatures(nodeId);
+      if (res?.error) {
+        setFeaturesError(res.error);
+        setFeatures([]);
+        return;
+      }
+      setFeatures(res.features || []);
+    } catch (e) {
+      console.error("[LORE] load features failed:", e);
+      setFeaturesError("Failed to load features");
+      setFeatures([]);
+    } finally {
+      setFeaturesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (selectedNode?.id) loadFeatures(selectedNode.id);
+    else {
+      setFeatures([]);
+      setFeaturesError("");
+    }
+    setFeaturesExpanded(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNode?.id]);
+
+  async function handleAddFeature() {
+    if (!selectedNode?.id) return;
+    const title = prompt("Feature title:");
+    if (!title) return;
+    setFeaturesError("");
+    try {
+      const res = await createAdminLoreFeature(selectedNode.id, {
+        title,
+        value: "",
+        sort_order: 0
+      });
+      if (res?.error) {
+        setFeaturesError(res.error);
+        return;
+      }
+      await loadFeatures(selectedNode.id);
+    } catch (e) {
+      console.error("[LORE] add feature failed:", e);
+      setFeaturesError("Failed to add feature");
+    }
+  }
+
+  async function handleSaveFeature(f) {
+    if (!selectedNode?.id || !f?.id) return;
+    setFeatureSavingId(f.id);
+    setFeaturesError("");
+    try {
+      const res = await updateAdminLoreFeature(f.id, {
+        title: f.title ?? "",
+        value: f.value ?? "",
+        sort_order: f.sort_order ?? 0
+      });
+      if (res?.error) {
+        setFeaturesError(res.error);
+        return;
+      }
+      await loadFeatures(selectedNode.id);
+    } catch (e) {
+      console.error("[LORE] save feature failed:", e);
+      setFeaturesError("Failed to save feature");
+    } finally {
+      setFeatureSavingId(null);
+    }
+  }
+
+  async function handleDeleteFeature(id) {
+    if (!selectedNode?.id || !id) return;
+    if (!window.confirm("Delete this feature?")) return;
+    setFeatureSavingId(id);
+    setFeaturesError("");
+    try {
+      const res = await deleteAdminLoreFeature(id);
+      if (res?.error) {
+        setFeaturesError(res.error);
+        return;
+      }
+      await loadFeatures(selectedNode.id);
+    } catch (e) {
+      console.error("[LORE] delete feature failed:", e);
+      setFeaturesError("Failed to delete feature");
+    } finally {
+      setFeatureSavingId(null);
+    }
+  }
+
+  function updateFeatureLocal(id, field, value) {
+    setFeatures((prev) =>
+      prev.map((f) => (String(f.id) === String(id) ? { ...f, [field]: value } : f))
+    );
+  }
+
   return (
     <div className="lore-admin">
       <div className="lore-header">
@@ -300,6 +421,7 @@ export function AdminLoreView() {
               onSelect={setSelectedId}
               onAddChild={handleAddChild}
               onDelete={handleDelete}
+              featureCountsByNodeId={featureCountsByNodeId}
             />
           </div>
 
@@ -310,6 +432,90 @@ export function AdminLoreView() {
               </div>
             ) : (
               <>
+                <div className="lore-editor-row" style={{ marginBottom: 8 }}>
+                  <div className="lore-features-header">
+                    <label className="lore-label" style={{ margin: 0 }}>
+                      Features
+                    </label>
+                    <button
+                      type="button"
+                      className="lore-features-toggle"
+                      onClick={() => setFeaturesExpanded((prev) => !prev)}
+                    >
+                      {featuresExpanded ? "–" : "+"}
+                    </button>
+                  </div>
+                  {featuresExpanded && (
+                    <div className="lore-features-panel">
+                      {featuresLoading ? (
+                        <div style={{ padding: "0.25rem 0", opacity: 0.8 }}>
+                          Loading features…
+                        </div>
+                      ) : (
+                        <>
+                          {featuresError && (
+                            <div className="lore-error" style={{ marginBottom: 6 }}>
+                              {featuresError}
+                            </div>
+                          )}
+                          {(features || []).map((f) => (
+                            <div className="lore-feature-card" key={f.id}>
+                              <div className="lore-editor-row" style={{ marginBottom: 6 }}>
+                                <label className="lore-label" style={{ minWidth: 60 }}>
+                                  Title
+                                </label>
+                                <input
+                                  className="lore-input"
+                                  value={f.title || ""}
+                                  onChange={(e) =>
+                                    updateFeatureLocal(f.id, "title", e.target.value)
+                                  }
+                                  placeholder="Feature title"
+                                />
+                              </div>
+                              <div className="lore-editor-row" style={{ marginBottom: 8 }}>
+                                <label className="lore-label" style={{ minWidth: 60 }}>
+                                  Value
+                                </label>
+                                <input
+                                  className="lore-input"
+                                  value={f.value || ""}
+                                  onChange={(e) =>
+                                    updateFeatureLocal(f.id, "value", e.target.value)
+                                  }
+                                  placeholder="Feature value"
+                                />
+                              </div>
+                              <div className="lore-feature-actions">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveFeature(f)}
+                                  disabled={featureSavingId === f.id}
+                                >
+                                  {featureSavingId === f.id ? "Saving…" : "Save Feature"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="lore-danger"
+                                  onClick={() => handleDeleteFeature(f.id)}
+                                  disabled={featureSavingId === f.id}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="lore-add-feature">
+                            <button type="button" onClick={handleAddFeature}>
+                              + Add Feature
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="lore-savebar">
                   <div className="lore-savebadge" data-state={saveState}>
                     {saveState === "saving" && "Saving…"}

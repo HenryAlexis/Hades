@@ -87,6 +87,25 @@ db.serialize(() => {
     CREATE INDEX IF NOT EXISTS idx_lore_nodes_parent_position
     ON lore_nodes (parent_id, position, id);
   `);
+
+  // Per-node feature key/values
+  db.run(`
+    CREATE TABLE IF NOT EXISTS lore_features (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      node_id INTEGER NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      value TEXT NOT NULL DEFAULT '',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (node_id) REFERENCES lore_nodes(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_lore_features_node_sort
+    ON lore_features (node_id, sort_order, id);
+  `);
 });
 
 /**
