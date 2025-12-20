@@ -201,9 +201,11 @@ export function AdminView() {
 
   return (
     <div
+      className="admin-shell"
       style={{
-        maxWidth: 1200,
-        margin: "2rem auto",
+        maxWidth: "none",
+        width: "100%",
+        margin: "0",
         padding: "1rem",
         borderRadius: "10px",
         border: "1px solid #4a3823",
@@ -211,7 +213,8 @@ export function AdminView() {
         boxShadow: "0 0 25px #000",
         display: "flex",
         flexDirection: "column",
-        height: "80vh"
+        height: "100vh",
+        overflow: "hidden"
       }}
     >
       <AdminHeader
@@ -221,66 +224,76 @@ export function AdminView() {
         view={view}
       />
 
-      {/* ADMIN NAV */}
-      <div style={{ margin: "0.75rem 0", display: "flex", gap: "0.5rem" }}>
-        <button
-          type="button"
-          onClick={() => setView("sessions")}
-          disabled={view === "sessions"}
-          style={navBtnStyle(view === "sessions")}
-        >
-          Sessions
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("lore")}
-          disabled={view === "lore"}
-          style={navBtnStyle(view === "lore")}
-        >
-          Write Lore
-        </button>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: "auto",
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
+        {/* ADMIN NAV */}
+        <div style={{ margin: "0.75rem 0", display: "flex", gap: "0.5rem" }}>
+          <button
+            type="button"
+            onClick={() => setView("sessions")}
+            disabled={view === "sessions"}
+            style={navBtnStyle(view === "sessions")}
+          >
+            Sessions
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("lore")}
+            disabled={view === "lore"}
+            style={navBtnStyle(view === "lore")}
+          >
+            Write Lore
+          </button>
+        </div>
+
+        {view === "sessions" && (
+          <>
+            <div style={{ display: "flex", flex: 1, gap: "1rem", minHeight: 0 }}>
+              <AdminSessionList
+                sessions={sessions}
+                sessionsLoading={sessionsLoading}
+                sessionsError={sessionsError}
+                selectedSessionId={selectedSessionId}
+                deletingSessionId={deletingSessionId}
+                deletingAll={deletingAll}
+                onSelectSession={loadSessionDetails}
+                onDeleteSession={handleDeleteSession}
+              />
+
+              <AdminSessionDetails
+                selectedSessionId={selectedSessionId}
+                detailsLoading={detailsLoading}
+                detailsError={detailsError}
+                sessionDetails={sessionDetails}
+              />
+            </div>
+
+            <div style={{ marginTop: "0.75rem", textAlign: "right" }}>
+              <button
+                type="button"
+                onClick={handleDeleteAllSessions}
+                disabled={sessions.length === 0 || deletingAll}
+                style={{
+                  background: "linear-gradient(#5b1010, #3b0505)",
+                  border: "1px solid #ff6666",
+                  color: "#ffe3e3"
+                }}
+              >
+                {deletingAll ? "Purging all sessions…" : "Remove all sessions"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {view === "lore" && <AdminLoreView />}
       </div>
-
-      {view === "sessions" && (
-        <>
-          <div style={{ display: "flex", flex: 1, gap: "1rem", minHeight: 0 }}>
-            <AdminSessionList
-              sessions={sessions}
-              sessionsLoading={sessionsLoading}
-              sessionsError={sessionsError}
-              selectedSessionId={selectedSessionId}
-              deletingSessionId={deletingSessionId}
-              deletingAll={deletingAll}
-              onSelectSession={loadSessionDetails}
-              onDeleteSession={handleDeleteSession}
-            />
-
-            <AdminSessionDetails
-              selectedSessionId={selectedSessionId}
-              detailsLoading={detailsLoading}
-              detailsError={detailsError}
-              sessionDetails={sessionDetails}
-            />
-          </div>
-
-          <div style={{ marginTop: "0.75rem", textAlign: "right" }}>
-            <button
-              type="button"
-              onClick={handleDeleteAllSessions}
-              disabled={sessions.length === 0 || deletingAll}
-              style={{
-                background: "linear-gradient(#5b1010, #3b0505)",
-                border: "1px solid #ff6666",
-                color: "#ffe3e3"
-              }}
-            >
-              {deletingAll ? "Purging all sessions…" : "Remove all sessions"}
-            </button>
-          </div>
-        </>
-      )}
-
-      {view === "lore" && <AdminLoreView />}
     </div>
   );
 }
