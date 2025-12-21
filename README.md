@@ -92,6 +92,8 @@ server/
     routes/
       playerRoutes.js
       adminRoutes.js
+      adminLoreRoutes.js
+      adminCharacterRoutes.js
   game.db
 
 web/
@@ -107,6 +109,14 @@ web/
         AdminSessionDetails.jsx
         AdminSessionList.jsx
         AdminView.jsx
+        characters/
+          AdminCharactersView.jsx
+          characters.less
+        lore/
+          AdminLoreView.jsx
+          LoreTree.jsx
+          LoreNode.jsx
+          lore.less
       CharacterSetup.jsx
       GameView.jsx
 ```
@@ -119,6 +129,16 @@ web/
 - Existing `game.db` files created before the lore foreign key existed require a migration to enforce `ON DELETE CASCADE` on `lore_nodes`
 - Dummy seed data loads only on empty DB
 - Short-context prompt used for AI
+
+## Quick file-to-DB map (fast onboarding)
+- `server/src/db.js`: SQLite schema and indices. Tables: sessions/players/turns/state; lore_nodes (content/position), lore_features (per-node key/values), lore_node_characters (links), characters, character_attributes. FKs ON with cascades.
+- `server/src/routes/adminRoutes.js`: Admin auth + stats/sessions; mounts `adminLoreRoutes` and `adminCharacterRoutes`.
+- `server/src/routes/adminLoreRoutes.js`: Lore node CRUD (content↔body, position↔sort_order), features CRUD, lore-node↔character link endpoints.
+- `server/src/routes/adminCharacterRoutes.js`: Characters CRUD and attribute CRUD (sortable), admin-guarded.
+- `web/src/api.js`: Frontend API helpers matching admin/player endpoints, including lore nodes/features, characters/attrs, and lore-node character links.
+- `web/src/components/admin/AdminView.jsx`: Admin shell/nav; switches between sessions, lore editor, characters.
+- `web/src/components/admin/lore/*`: Lore UI (tree, nodes, feature editor with autosave, character picker), styles in `lore.less`.
+- `web/src/components/admin/characters/AdminCharactersView.jsx`: Character list/editor with attributes (autosave, expand/collapse), styles in `characters.less`.
 
 ## Useful Commands
 ```
