@@ -14,7 +14,7 @@ const personalityRateLimit = new Map(); // sessionId -> timestamp ms
 router.get("/character", (req, res) => {
   db.get(
     `
-      SELECT name, class, background, personality, alignment
+      SELECT name, class, background, personality
       FROM players
       WHERE session_id = ?
     `,
@@ -31,21 +31,20 @@ router.get("/character", (req, res) => {
 
 // POST /api/character
 router.post("/character", (req, res) => {
-  const { name, playerClass, background, personality, alignment } = req.body || {};
+  const { name, playerClass, background, personality } = req.body || {};
 
   db.run(
     `
-      INSERT INTO players (session_id, name, class, background, personality, alignment)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO players (session_id, name, class, background, personality)
+      VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(session_id) DO UPDATE SET
         name = excluded.name,
         class = excluded.class,
         background = excluded.background,
         personality = excluded.personality,
-        alignment = excluded.alignment,
         updated_at = CURRENT_TIMESTAMP
     `,
-    [req.sessionId, name, playerClass, background, personality, alignment],
+    [req.sessionId, name, playerClass, background, personality],
     (err) => {
       if (err) {
         console.error("[CHAR] Save failed:", err);
@@ -130,7 +129,7 @@ Description: "${text.trim()}"
     // Normalize length limits and count
     suggestions = suggestions
       .map((s) => (s.length > 70 ? s.slice(0, 70).trim() : s))
-      .slice(0, 8);
+      .slice(0, 3);
 
     res.json({ suggestions });
   } catch (err) {

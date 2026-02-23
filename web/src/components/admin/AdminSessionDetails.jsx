@@ -70,10 +70,6 @@ export function AdminSessionDetails({
               {sessionDetails.player?.name || "Unnamed wanderer"}
             </div>
             <div>
-              <strong>Alignment:</strong>{" "}
-              {sessionDetails.player?.alignment || "—"}
-            </div>
-            <div>
               <strong>Personality:</strong>{" "}
               {sessionDetails.player?.personality || "—"}
             </div>

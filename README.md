@@ -19,7 +19,7 @@ This README describes the current codebase—including foundational backend impr
 ### ⭐ Player-Facing Features
 - Cookie-based session tracking (persistent per-player saves) via dedicated middleware
 - Character creation flow:
-- name, class, alignment, background, personality
+- name, class, background, personality
 - Turn-based narrative loop:
   - Player input → DeepSeek → short structured responses
   - Turn history saved per session

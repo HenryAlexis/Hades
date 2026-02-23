@@ -135,7 +135,7 @@ router.get("/session/:id", requireAdmin, (req, res) => {
   const result = { sessionId };
 
   db.get(
-    `SELECT name, class, background, personality, alignment FROM players WHERE session_id = ?`,
+    `SELECT name, class, background, personality FROM players WHERE session_id = ?`,
     [sessionId],
     (err, player) => {
       if (err) {
@@ -191,7 +191,7 @@ router.get("/session/:id", requireAdmin, (req, res) => {
 // PATCH /api/admin/player/:sessionId
 router.patch("/player/:sessionId", requireAdmin, (req, res) => {
   const { sessionId } = req.params;
-  const { name, playerClass, personality, alignment, background } = req.body || {};
+  const { name, playerClass, personality, background } = req.body || {};
 
   const fields = [];
   const params = [];
@@ -207,10 +207,6 @@ router.patch("/player/:sessionId", requireAdmin, (req, res) => {
   if (typeof personality === "string") {
     fields.push("personality = ?");
     params.push(personality);
-  }
-  if (typeof alignment === "string") {
-    fields.push("alignment = ?");
-    params.push(alignment);
   }
   if (typeof background === "string") {
     fields.push("background = ?");

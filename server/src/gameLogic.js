@@ -56,7 +56,6 @@ Name: ${player?.name || "Unknown"}
 Class: ${player?.class || "Unknown"}
 Background: ${player?.background || "Unknown"}
 Personality: ${player?.personality || "Unknown"}
-Alignment: ${player?.alignment || "Uncertain"}
 
 State:
 Location: ${state?.location || "The Bleak Marches outskirts"}

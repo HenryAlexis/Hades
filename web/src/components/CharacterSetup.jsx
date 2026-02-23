@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { fetchCharacter, saveCharacter } from "../api";
+import React, { useState, useEffect, useRef } from "react";
+import { fetchCharacter, saveCharacter, fetchPersonalitySuggestions } from "../api";
 
 export function CharacterSetup({ onDone }) {
   const [loading, setLoading] = useState(true);
@@ -7,8 +7,12 @@ export function CharacterSetup({ onDone }) {
   const [name, setName] = useState("");
   const [background, setBackground] = useState("");
   const [personality, setPersonality] = useState("");
-  const [alignment, setAlignment] = useState("neutral");
   const [saving, setSaving] = useState(false);
+  const [personalitySuggestions, setPersonalitySuggestions] = useState([]);
+  const [suggLoading, setSuggLoading] = useState(false);
+  const [suggError, setSuggError] = useState("");
+  const suggTimerRef = useRef(null);
+  const suggAbortRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -18,7 +22,6 @@ export function CharacterSetup({ onDone }) {
         setName(data.name || "");
         setBackground(data.background || "");
         setPersonality(data.personality || "");
-        setAlignment(data.alignment || "neutral");
       }
       setLoading(false);
     })();
@@ -27,9 +30,47 @@ export function CharacterSetup({ onDone }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
-    await saveCharacter({ name, background, personality, alignment });
+    await saveCharacter({ name, background, personality });
     setSaving(false);
     onDone();
+  }
+
+  // Personality suggestion fetcher (debounced)
+  function handlePersonalityChange(value) {
+    setPersonality(value);
+    setSuggError("");
+    setPersonalitySuggestions([]);
+
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      if (suggTimerRef.current) clearTimeout(suggTimerRef.current);
+      if (suggAbortRef.current) suggAbortRef.current.abort();
+      setSuggLoading(false);
+      return;
+    }
+
+    if (suggTimerRef.current) clearTimeout(suggTimerRef.current);
+    suggTimerRef.current = setTimeout(async () => {
+      if (suggAbortRef.current) suggAbortRef.current.abort();
+      const controller = new AbortController();
+      suggAbortRef.current = controller;
+      setSuggLoading(true);
+      try {
+        const res = await fetchPersonalitySuggestions(trimmed, { signal: controller.signal });
+        if (res?.error) {
+          setSuggError(res.error);
+          setPersonalitySuggestions([]);
+        } else {
+          setPersonalitySuggestions(res);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setSuggError("Failed to load suggestions");
+        }
+      } finally {
+        setSuggLoading(false);
+      }
+    }, 500);
   }
 
   if (loading) {
@@ -102,27 +143,56 @@ export function CharacterSetup({ onDone }) {
           </label>
           <textarea
             value={personality}
-            onChange={(e) => setPersonality(e.target.value)}
+            onChange={(e) => handlePersonalityChange(e.target.value)}
             rows={3}
             style={{ width: "100%", resize: "vertical" }}
           />
-        </div>
-
-        <div style={{ marginBottom: "1.25rem" }}>
-          <label style={{ display: "block", marginBottom: "0.25rem" }}>
-            Alignment
-          </label>
-          <select
-            value={alignment}
-            onChange={(e) => setAlignment(e.target.value)}
-            style={{ width: "100%" }}
+          <div
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.45rem 0.55rem",
+              border: "1px solid #4a3823",
+              borderRadius: 8,
+              background: "rgba(20, 14, 8, 0.55)"
+            }}
           >
-            <option value="lawful good">Lawful Good</option>
-            <option value="neutral">Neutral</option>
-            <option value="chaotic good">Chaotic Good</option>
-            <option value="lawful evil">Lawful Evil</option>
-            <option value="chaotic evil">Chaotic Evil</option>
-          </select>
+            <div style={{ fontSize: "0.9rem", color: "#e7d7b0", marginBottom: "0.25rem" }}>
+              Examples
+            </div>
+            {suggLoading && (
+              <div style={{ fontSize: "0.85rem", color: "#d9c7a0" }}>Thinking…</div>
+            )}
+            {suggError && (
+              <div style={{ fontSize: "0.85rem", color: "#ff9b8c" }}>{suggError}</div>
+            )}
+            {!suggLoading && !suggError && personalitySuggestions.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {personalitySuggestions.map((s, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPersonality(s)}
+                    style={{
+                      border: "1px solid #4a3823",
+                      background: "linear-gradient(#3b2a14, #24170b)",
+                      color: "#f3e6d0",
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      boxShadow: "0 1px 0 rgba(0,0,0,0.4)"
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!suggLoading && !suggError && personalitySuggestions.length === 0 && (
+              <div style={{ fontSize: "0.85rem", color: "#bcae8c", opacity: 0.8 }}>
+                Type a few words to see ideas.
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ textAlign: "right" }}>

@@ -32,7 +32,6 @@ db.serialize(() => {
       class TEXT,
       background TEXT,
       personality TEXT,
-      alignment TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
@@ -60,6 +59,55 @@ db.serialize(() => {
             } else {
               console.info("[DB] Backfilled personality from goal");
             }
+          }
+        );
+      });
+    }
+
+    const hasAlignment = rows.some((r) => r.name === "alignment");
+    if (hasAlignment) {
+      // SQLite lacks DROP COLUMN; rebuild table without alignment
+      db.serialize(() => {
+        db.run(
+          `
+            CREATE TABLE IF NOT EXISTS players_tmp (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              session_id TEXT UNIQUE,
+              name TEXT,
+              class TEXT,
+              background TEXT,
+              personality TEXT,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+          `
+        );
+
+        db.run(
+          `
+            INSERT INTO players_tmp (id, session_id, name, class, background, personality, created_at, updated_at)
+            SELECT id, session_id, name, class, background, personality, created_at, updated_at
+            FROM players
+          `,
+          [],
+          (copyErr) => {
+            if (copyErr) {
+              console.error("[DB] Failed to copy players into players_tmp:", copyErr);
+              return;
+            }
+            db.run(`DROP TABLE players;`, [], (dropErr) => {
+              if (dropErr) {
+                console.error("[DB] Failed to drop old players table:", dropErr);
+                return;
+              }
+              db.run(`ALTER TABLE players_tmp RENAME TO players;`, [], (renameErr) => {
+                if (renameErr) {
+                  console.error("[DB] Failed to rename players_tmp to players:", renameErr);
+                } else {
+                  console.info("[DB] Removed alignment column from players");
+                }
+              });
+            });
           }
         );
       });

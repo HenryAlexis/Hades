@@ -71,6 +71,17 @@ export function sendTurn(message) {
   });
 }
 
+export async function fetchPersonalitySuggestions(text, fetchOptions = {}) {
+  const res = await request("/suggest/personality", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+    ...fetchOptions
+  });
+  if (res?.error) return res;
+  return res?.suggestions || [];
+}
+
 // (Future) stats endpoint
 export function fetchStats() {
   return request("/stats");
