@@ -104,6 +104,6 @@ ${WORLD_CONFIG.constraints.map((c) => `- ${c}`).join("\n")}
 
 You must:
 - Track continuity: location, injuries, allies, enemies, items.
-- Keep the story reactive to the player's class, background, goals, and alignment.
+- Keep the story reactive to the player's class, background, personality, and alignment.
 - End EVERY response with a short list of 2–4 numbered choices the player can take next.
 `;*/

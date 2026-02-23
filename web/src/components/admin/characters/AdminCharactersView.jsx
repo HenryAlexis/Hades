@@ -390,7 +390,7 @@ export function AdminCharactersView() {
                             </div>
                             <div className="attr-value">
                               <label className="lore-label">Value</label>
-                              <input
+                              <textarea
                                 className="lore-input"
                                 value={a.attr_value || ""}
                                 onChange={(e) => updateAttrLocal(a.id, "attr_value", e.target.value)}

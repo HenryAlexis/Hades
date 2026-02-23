@@ -70,16 +70,12 @@ export function AdminSessionDetails({
               {sessionDetails.player?.name || "Unnamed wanderer"}
             </div>
             <div>
-              <strong>Class:</strong>{" "}
-              {sessionDetails.player?.class || "—"}
-            </div>
-            <div>
               <strong>Alignment:</strong>{" "}
               {sessionDetails.player?.alignment || "—"}
             </div>
             <div>
-              <strong>Goal:</strong>{" "}
-              {sessionDetails.player?.goal || "—"}
+              <strong>Personality:</strong>{" "}
+              {sessionDetails.player?.personality || "—"}
             </div>
             <div>
               <strong>Background:</strong>{" "}

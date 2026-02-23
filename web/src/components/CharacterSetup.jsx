@@ -5,9 +5,8 @@ export function CharacterSetup({ onDone }) {
   const [loading, setLoading] = useState(true);
 
   const [name, setName] = useState("");
-  const [playerClass, setPlayerClass] = useState("warrior");
   const [background, setBackground] = useState("");
-  const [goal, setGoal] = useState("");
+  const [personality, setPersonality] = useState("");
   const [alignment, setAlignment] = useState("neutral");
   const [saving, setSaving] = useState(false);
 
@@ -17,9 +16,8 @@ export function CharacterSetup({ onDone }) {
       const data = await fetchCharacter();
       if (data) {
         setName(data.name || "");
-        setPlayerClass(data.class || "warrior");
         setBackground(data.background || "");
-        setGoal(data.goal || "");
+        setPersonality(data.personality || "");
         setAlignment(data.alignment || "neutral");
       }
       setLoading(false);
@@ -29,7 +27,7 @@ export function CharacterSetup({ onDone }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
-    await saveCharacter({ name, playerClass, background, goal, alignment });
+    await saveCharacter({ name, background, personality, alignment });
     setSaving(false);
     onDone();
   }
@@ -65,7 +63,7 @@ export function CharacterSetup({ onDone }) {
       <div className="medieval-header">
         <div style={{ fontSize: "1.3rem" }}>Forge Your Legend</div>
         <div className="medieval-stats">
-          Inscribe your name, class and intent before stepping into the Bleak Marches.
+          Inscribe your name and intent before stepping into the Bleak Marches.
         </div>
       </div>
 
@@ -84,23 +82,6 @@ export function CharacterSetup({ onDone }) {
 
         <div style={{ marginBottom: "1rem" }}>
           <label style={{ display: "block", marginBottom: "0.25rem" }}>
-            Class
-          </label>
-          <select
-            value={playerClass}
-            onChange={(e) => setPlayerClass(e.target.value)}
-            style={{ width: "100%" }}
-          >
-            <option value="warrior">Warrior</option>
-            <option value="mage">Mage</option>
-            <option value="rogue">Rogue</option>
-            <option value="witch">Witch</option>
-            <option value="cleric">Cleric</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: "1rem" }}>
-          <label style={{ display: "block", marginBottom: "0.25rem" }}>
             Background <span style={{ fontSize: "0.8rem", color: "#c9b896" }}>
               (where do you come from?)
             </span>
@@ -115,14 +96,15 @@ export function CharacterSetup({ onDone }) {
 
         <div style={{ marginBottom: "1rem" }}>
           <label style={{ display: "block", marginBottom: "0.25rem" }}>
-            Goal <span style={{ fontSize: "0.8rem", color: "#c9b896" }}>
-              (what do you seek?)
+            Personality <span style={{ fontSize: "0.8rem", color: "#c9b896" }}>
+              (how do you face the world?)
             </span>
           </label>
-          <input
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            style={{ width: "100%" }}
+          <textarea
+            value={personality}
+            onChange={(e) => setPersonality(e.target.value)}
+            rows={3}
+            style={{ width: "100%", resize: "vertical" }}
           />
         </div>
 

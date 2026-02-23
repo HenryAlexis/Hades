@@ -31,12 +31,40 @@ db.serialize(() => {
       name TEXT,
       class TEXT,
       background TEXT,
-      goal TEXT,
+      personality TEXT,
       alignment TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Migration: add personality column if an older DB still has `goal`
+  db.all(`PRAGMA table_info(players);`, [], (err, rows) => {
+    if (err) {
+      console.error("[DB] Failed to inspect players table:", err);
+      return;
+    }
+    const hasPersonality = rows.some((r) => r.name === "personality");
+    if (!hasPersonality) {
+      db.run(`ALTER TABLE players ADD COLUMN personality TEXT;`, [], (alterErr) => {
+        if (alterErr) {
+          console.error("[DB] Failed to add personality column:", alterErr);
+          return;
+        }
+        db.run(
+          `UPDATE players SET personality = COALESCE(personality, goal);`,
+          [],
+          (copyErr) => {
+            if (copyErr) {
+              console.error("[DB] Failed to backfill personality from goal:", copyErr);
+            } else {
+              console.info("[DB] Backfilled personality from goal");
+            }
+          }
+        );
+      });
+    }
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS turns (

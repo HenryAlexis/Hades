@@ -109,7 +109,7 @@ router.get("/sessions", requireAdmin, (req, res) => {
       s.updated_at,
       p.name AS player_name,
       p.class AS player_class,
-      p.goal AS player_goal
+      p.personality AS player_personality
     FROM sessions s
     LEFT JOIN players p ON p.session_id = s.id
     WHERE p.name IS NOT NULL
@@ -135,7 +135,7 @@ router.get("/session/:id", requireAdmin, (req, res) => {
   const result = { sessionId };
 
   db.get(
-    `SELECT name, class, background, goal, alignment FROM players WHERE session_id = ?`,
+    `SELECT name, class, background, personality, alignment FROM players WHERE session_id = ?`,
     [sessionId],
     (err, player) => {
       if (err) {
@@ -191,7 +191,7 @@ router.get("/session/:id", requireAdmin, (req, res) => {
 // PATCH /api/admin/player/:sessionId
 router.patch("/player/:sessionId", requireAdmin, (req, res) => {
   const { sessionId } = req.params;
-  const { name, playerClass, goal, alignment, background } = req.body || {};
+  const { name, playerClass, personality, alignment, background } = req.body || {};
 
   const fields = [];
   const params = [];
@@ -204,9 +204,9 @@ router.patch("/player/:sessionId", requireAdmin, (req, res) => {
     fields.push("class = ?");
     params.push(playerClass);
   }
-  if (typeof goal === "string") {
-    fields.push("goal = ?");
-    params.push(goal);
+  if (typeof personality === "string") {
+    fields.push("personality = ?");
+    params.push(personality);
   }
   if (typeof alignment === "string") {
     fields.push("alignment = ?");

@@ -132,11 +132,10 @@ export function AdminSessionList({
             </button>
 
             <div>
-              <strong>{s.player_name || "Unnamed wanderer"}</strong>{" "}
-              <span style={{ opacity: 0.8 }}>({s.player_class || "—"})</span>
+              <strong>{s.player_name || "Unnamed wanderer"}</strong>
             </div>
             <div style={{ fontSize: "0.8rem", opacity: 0.8 }}>
-              {s.player_goal || "No goal set"}
+              {s.player_personality || "No personality set"}
             </div>
             <div
               style={{

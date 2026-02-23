@@ -19,7 +19,7 @@ This README describes the current codebase—including foundational backend impr
 ### ⭐ Player-Facing Features
 - Cookie-based session tracking (persistent per-player saves) via dedicated middleware
 - Character creation flow:
-  - name, class, alignment, background, goal
+- name, class, alignment, background, personality
 - Turn-based narrative loop:
   - Player input → DeepSeek → short structured responses
   - Turn history saved per session
@@ -29,7 +29,7 @@ This README describes the current codebase—including foundational backend impr
 
 ### ⭐ Admin Features
 - Password-protected admin dashboard (`/admin`)
-- Session list (no empty/ghost sessions) with class/goal context
+- Session list (no empty/ghost sessions) with class/personality context
 - Per-session drilldown: player profile, state, last 30 turns
 - Delete one session, reset one session (keep player), or delete all sessions
 - Lore Editor (`/admin` → Write Lore)

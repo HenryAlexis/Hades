@@ -2,8 +2,10 @@
 import express from "express";
 import { db } from "../db.js";
 import { runGameTurn, getTurnsForSession } from "../gameLogic.js";
+import { deepseek } from "../deepseekClient.js";
 
 const router = express.Router();
+const personalityRateLimit = new Map(); // sessionId -> timestamp ms
 
 // ==================================================
 // PLAYER — CHARACTER APIs
@@ -12,7 +14,7 @@ const router = express.Router();
 router.get("/character", (req, res) => {
   db.get(
     `
-      SELECT name, class, background, goal, alignment
+      SELECT name, class, background, personality, alignment
       FROM players
       WHERE session_id = ?
     `,
@@ -29,21 +31,21 @@ router.get("/character", (req, res) => {
 
 // POST /api/character
 router.post("/character", (req, res) => {
-  const { name, playerClass, background, goal, alignment } = req.body || {};
+  const { name, playerClass, background, personality, alignment } = req.body || {};
 
   db.run(
     `
-      INSERT INTO players (session_id, name, class, background, goal, alignment)
+      INSERT INTO players (session_id, name, class, background, personality, alignment)
       VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(session_id) DO UPDATE SET
         name = excluded.name,
         class = excluded.class,
         background = excluded.background,
-        goal = excluded.goal,
+        personality = excluded.personality,
         alignment = excluded.alignment,
         updated_at = CURRENT_TIMESTAMP
     `,
-    [req.sessionId, name, playerClass, background, goal, alignment],
+    [req.sessionId, name, playerClass, background, personality, alignment],
     (err) => {
       if (err) {
         console.error("[CHAR] Save failed:", err);
@@ -75,6 +77,66 @@ router.post("/character", (req, res) => {
       res.json({ ok: true });
     }
   );
+});
+
+// POST /api/suggest/personality
+router.post("/suggest/personality", async (req, res) => {
+  const now = Date.now();
+  const lastHit = personalityRateLimit.get(req.sessionId) || 0;
+  if (now - lastHit < 700) {
+    return res.status(429).json({ error: "rate_limited", suggestions: [] });
+  }
+  personalityRateLimit.set(req.sessionId, now);
+
+  const { text } = req.body || {};
+  if (!text || typeof text !== "string" || text.trim().length < 2) {
+    return res.json({ suggestions: [] });
+  }
+
+  const prompt = `
+Given a short player description, suggest 5-8 concise personality hooks (<=35 chars each) suitable for a dark fantasy adventurer.
+Return ONLY a JSON array of strings, no prose, no prefixes.
+Description: "${text.trim()}"
+`.trim();
+
+  try {
+    const completion = await deepseek.chat.completions.create({
+      model: "deepseek-chat",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 180,
+      temperature: 0.7
+    });
+
+    const raw = completion.choices?.[0]?.message?.content?.trim() || "";
+    let suggestions = [];
+
+    // Try strict JSON parse first
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        suggestions = parsed
+          .filter((s) => typeof s === "string")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      // Fallback: split by lines or semicolons
+      suggestions = raw
+        .split(/\n|;/)
+        .map((s) => s.replace(/^-+\s*/, "").trim())
+        .filter(Boolean);
+    }
+
+    // Normalize length limits and count
+    suggestions = suggestions
+      .map((s) => (s.length > 70 ? s.slice(0, 70).trim() : s))
+      .slice(0, 8);
+
+    res.json({ suggestions });
+  } catch (err) {
+    console.error("[SUGGEST personality] Failed:", err);
+    res.status(500).json({ error: "suggestion_failed", suggestions: [] });
+  }
 });
 
 // ==================================================

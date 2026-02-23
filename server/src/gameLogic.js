@@ -55,7 +55,7 @@ Player:
 Name: ${player?.name || "Unknown"}
 Class: ${player?.class || "Unknown"}
 Background: ${player?.background || "Unknown"}
-Goal: ${player?.goal || "Unknown"}
+Personality: ${player?.personality || "Unknown"}
 Alignment: ${player?.alignment || "Uncertain"}
 
 State:
